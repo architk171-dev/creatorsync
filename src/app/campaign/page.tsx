@@ -42,6 +42,36 @@ import { auditCreator, AuditResult } from "@/lib/audit";
 import { calculateROI, getBudgetNumber, formatCurrency } from "@/lib/roi";
 import Link from "next/link";
 
+const PLATFORM_GRADIENTS: Record<string, string> = {
+  youtube: "from-red-500/80 to-red-700/80",
+  instagram: "from-pink-500/80 to-purple-600/80",
+};
+
+function CreatorAvatar({ src, name, platform, size = "md" }: { src?: string; name: string; platform: string; size?: "sm" | "md" }) {
+  const [failed, setFailed] = useState(false);
+  const dim = size === "sm" ? "w-10 h-10" : "w-12 h-12";
+  const textSize = size === "sm" ? "text-sm" : "text-base";
+  const gradient = PLATFORM_GRADIENTS[platform] || "from-accent/60 to-accent/90";
+  const initials = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+
+  if (src && !failed) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        className={`${dim} rounded-full border border-border object-cover shrink-0`}
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <div className={`${dim} rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center shrink-0 border border-white/10`}>
+      <span className={`${textSize} font-bold text-white drop-shadow-sm`}>{initials}</span>
+    </div>
+  );
+}
+
 const CATEGORIES = [
   "Tech & Gadgets",
   "Gaming",
@@ -664,11 +694,7 @@ function CreatorCard({ creator, budgetRange, onDeepReport, isComparing, onToggle
           <button onClick={onToggleCompare} className="mt-1 shrink-0 cursor-pointer">
             {isComparing ? <SquareCheck className="w-5 h-5 text-accent" /> : <Square className="w-5 h-5 text-muted hover:text-accent transition" />}
           </button>
-          {creator.thumbnailUrl ? (
-            <img src={creator.thumbnailUrl} alt={creator.name} className="w-12 h-12 rounded-full border border-border object-cover shrink-0" />
-          ) : (
-            <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold shrink-0">{creator.name.charAt(0)}</div>
-          )}
+          <CreatorAvatar src={creator.thumbnailUrl} name={creator.name} platform={creator.platform} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h4 className="text-sm font-bold truncate">{creator.name}</h4>
@@ -858,11 +884,7 @@ function ComparisonView({ creators, budgetRange, onBack }: {
               {data.map((d) => (
                 <th key={d.creator.handle} className="text-center p-3 border-b border-border min-w-[160px]">
                   <div className="flex flex-col items-center gap-1">
-                    {d.creator.thumbnailUrl ? (
-                      <img src={d.creator.thumbnailUrl} alt={d.creator.name} className="w-10 h-10 rounded-full border border-border object-cover" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-sm">{d.creator.name.charAt(0)}</div>
-                    )}
+                    <CreatorAvatar src={d.creator.thumbnailUrl} name={d.creator.name} platform={d.creator.platform} size="sm" />
                     <p className="text-xs font-bold truncate max-w-[140px]">{d.creator.name}</p>
                     <p className="text-[10px] text-muted">@{d.creator.handle}</p>
                   </div>

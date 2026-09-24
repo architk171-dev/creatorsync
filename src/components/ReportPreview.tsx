@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Shield,
   TrendingUp,
@@ -77,6 +78,41 @@ function TrustBadge({ verdict, score }: { verdict: string; score: number }) {
   );
 }
 
+function ReportAvatar({ src, name, platform }: { src?: string; name: string; platform?: "youtube" | "instagram" }) {
+  const [failed, setFailed] = useState(false);
+  const gradient = platform === "youtube" ? "from-red-500/80 to-red-700/80" : platform === "instagram" ? "from-pink-500/80 to-purple-600/80" : "from-accent/60 to-accent/90";
+  const initials = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+
+  if (src && !failed) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        className="w-16 h-16 rounded-full border-2 border-accent/30 object-cover"
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center border-2 border-white/10`}>
+      <span className="text-lg font-bold text-white drop-shadow-sm">{initials}</span>
+    </div>
+  );
+}
+
+function VideoThumb({ src, alt }: { src: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div className="w-20 h-12 rounded-lg bg-gradient-to-br from-red-500/20 to-red-700/20 border border-border flex items-center justify-center shrink-0">
+        <Video className="w-4 h-4 text-muted" />
+      </div>
+    );
+  }
+  return <img src={src} alt={alt} className="w-20 h-12 rounded-lg object-cover shrink-0" onError={() => setFailed(true)} />;
+}
+
 export default function ReportPreview({ report }: { report: ReportData }) {
   const yt = report.youtube;
   const ig = report.instagram;
@@ -132,13 +168,11 @@ export default function ReportPreview({ report }: { report: ReportData }) {
       {/* Header */}
       <div className="bg-card rounded-2xl border border-border p-6 mb-4">
         <div className="flex items-start gap-4">
-          {(ig?.profilePicUrlHD || ig?.profilePicUrl || yt?.channel.thumbnailUrl) && (
-            <img
-              src={ig?.profilePicUrlHD || ig?.profilePicUrl || yt?.channel.thumbnailUrl}
-              alt={yt?.channel.title || ig?.fullName || "Creator"}
-              className="w-16 h-16 rounded-full border-2 border-accent/30 object-cover"
-            />
-          )}
+          <ReportAvatar
+            src={ig?.profilePicUrlHD || ig?.profilePicUrl || yt?.channel.thumbnailUrl}
+            name={yt?.channel.title || ig?.fullName || "Creator"}
+            platform={ig ? "instagram" : yt ? "youtube" : undefined}
+          />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h2 className="text-xl font-bold truncate">
@@ -343,11 +377,7 @@ export default function ReportPreview({ report }: { report: ReportData }) {
                   key={video.id}
                   className={`flex items-center gap-3 ${isPaid || i < 2 ? "" : "blur-metric"}`}
                 >
-                  <img
-                    src={video.thumbnailUrl}
-                    alt={video.title}
-                    className="w-20 h-12 rounded-lg object-cover shrink-0"
-                  />
+                  <VideoThumb src={video.thumbnailUrl} alt={video.title} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">
                       {video.title}
