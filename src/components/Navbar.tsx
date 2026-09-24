@@ -49,6 +49,12 @@ export default function Navbar() {
           >
             How We Verify
           </a>
+          <a
+            href="/competitor"
+            className="hover:text-foreground transition"
+          >
+            Competitor Intel
+          </a>
           <button
             onClick={() => scrollTo("pricing")}
             className="hover:text-foreground transition"
@@ -97,6 +103,13 @@ export default function Navbar() {
             onClick={() => setOpen(false)}
           >
             How We Verify
+          </a>
+          <a
+            href="/competitor"
+            className="text-sm text-muted hover:text-foreground"
+            onClick={() => setOpen(false)}
+          >
+            Competitor Intel
           </a>
           <button
             onClick={() => scrollTo("pricing")}

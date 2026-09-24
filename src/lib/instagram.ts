@@ -47,6 +47,9 @@ export async function getInstagramProfile(
         commentsCount: number;
         timestamp: string;
         type: string;
+        hashtags: string[];
+        mentions: string[];
+        url: string;
       }) => ({
         id: p.id,
         caption: (p.caption || "").slice(0, 100),
@@ -54,6 +57,9 @@ export async function getInstagramProfile(
         commentCount: p.commentsCount || 0,
         timestamp: p.timestamp,
         type: p.type || "image",
+        hashtags: p.hashtags || [],
+        mentions: p.mentions || [],
+        url: p.url || "",
       })
     );
 
@@ -70,6 +76,15 @@ export async function getInstagramProfile(
 
   const postFrequency = calculatePostFrequency(posts);
 
+  const externalUrls: string[] = profile.externalUrls || [];
+  const relatedProfiles = (profile.relatedProfiles || []).slice(0, 5).map(
+    (rp: { username: string; full_name: string; is_verified: boolean }) => ({
+      username: rp.username,
+      fullName: rp.full_name || rp.username,
+      isVerified: rp.is_verified || false,
+    })
+  );
+
   return {
     username: cleaned,
     fullName: profile.fullName || cleaned,
@@ -78,7 +93,14 @@ export async function getInstagramProfile(
     followingCount: profile.followsCount || 0,
     postCount: profile.postsCount || 0,
     profilePicUrl: profile.profilePicUrl || "",
+    profilePicUrlHD: profile.profilePicUrlHD || profile.profilePicUrl || "",
     isVerified: profile.verified || false,
+    isBusinessAccount: profile.isBusinessAccount || false,
+    businessCategoryName: profile.businessCategoryName || null,
+    externalUrl: externalUrls.length > 0 ? externalUrls[0] : null,
+    highlightReelCount: profile.highlightReelCount || 0,
+    igtvVideoCount: profile.igtvVideoCount || 0,
+    relatedProfiles,
     recentPosts: posts,
     engagementRate: Math.round(engagementRate * 100) / 100,
     postFrequency,

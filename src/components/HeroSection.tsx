@@ -1,11 +1,21 @@
 "use client";
 
-import { Shield, CheckCircle, Zap, ArrowDown, Target, Users, FileText } from "lucide-react";
+import {
+  Shield,
+  CheckCircle,
+  Zap,
+  ArrowDown,
+  Target,
+  IndianRupee,
+  ShieldCheck,
+  Percent,
+  Eye,
+  GitCompareArrows,
+} from "lucide-react";
 
 export default function HeroSection() {
   return (
     <section className="gradient-hero pt-28 pb-20 px-4 relative overflow-hidden">
-      {/* Background grid pattern */}
       <div
         className="absolute inset-0 opacity-[0.03]"
         style={{
@@ -19,7 +29,7 @@ export default function HeroSection() {
         <div className="inline-flex items-center gap-2 bg-accent/10 border border-accent/20 rounded-full px-4 py-1.5 mb-6 animate-fade-in-up">
           <Target className="w-4 h-4 text-accent" />
           <span className="text-xs font-medium text-accent">
-            AI-Powered Campaign Planner
+            AI-Powered Influencer Intelligence Platform
           </span>
         </div>
 
@@ -27,20 +37,18 @@ export default function HeroSection() {
           className="text-4xl md:text-6xl font-bold leading-tight mb-5 animate-fade-in-up"
           style={{ animationDelay: "0.1s" }}
         >
-          Find the
-          <span className="text-accent"> perfect creators</span>
+          Discover, Price, Audit &
           <br />
-          for your campaign with
-          <span className="text-accent"> AI.</span>
+          <span className="text-accent">Compare Creators</span> with AI.
         </h1>
 
         <p
           className="text-muted text-base md:text-lg max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up"
           style={{ animationDelay: "0.2s" }}
         >
-          Describe your campaign. Our AI analyzes your brief, discovers creators
-          on YouTube & Instagram, scores their fit, and generates deliverable
-          briefs — all backed by API-verified data.
+          The complete creator due diligence platform. Get pricing estimates,
+          fake follower audits, ROI projections, competitor intel, and
+          side-by-side comparisons — all from one campaign brief.
         </p>
 
         <div
@@ -53,6 +61,13 @@ export default function HeroSection() {
           >
             <Zap className="w-5 h-5" />
             Plan Your Campaign
+          </a>
+          <a
+            href="/competitor"
+            className="border border-accent/30 hover:border-accent text-accent px-8 py-4 rounded-full font-semibold transition-all flex items-center justify-center gap-2 text-base"
+          >
+            <Eye className="w-5 h-5" />
+            Competitor Intel
           </a>
           <button
             onClick={() => {
@@ -67,50 +82,67 @@ export default function HeroSection() {
         </div>
 
         <div
-          className="flex flex-wrap justify-center gap-6 text-xs text-muted mb-12 animate-fade-in-up"
+          className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-muted mb-12 animate-fade-in-up"
           style={{ animationDelay: "0.4s" }}
         >
           <span className="flex items-center gap-1.5">
             <CheckCircle className="w-3.5 h-3.5 text-success" />
-            AI Creator Discovery
+            Creator Pricing
           </span>
           <span className="flex items-center gap-1.5">
             <CheckCircle className="w-3.5 h-3.5 text-success" />
-            YouTube + Instagram
+            Fake Follower Audit
+          </span>
+          <span className="flex items-center gap-1.5">
+            <CheckCircle className="w-3.5 h-3.5 text-success" />
+            ROI Calculator
+          </span>
+          <span className="flex items-center gap-1.5">
+            <CheckCircle className="w-3.5 h-3.5 text-success" />
+            Competitor Tracking
+          </span>
+          <span className="flex items-center gap-1.5">
+            <CheckCircle className="w-3.5 h-3.5 text-success" />
+            Multi-Creator Compare
           </span>
           <span className="flex items-center gap-1.5">
             <CheckCircle className="w-3.5 h-3.5 text-success" />
             API-Verified Data
           </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle className="w-3.5 h-3.5 text-success" />
-            Deliverable Briefs
-          </span>
         </div>
 
         {/* Value props */}
         <div
-          className="grid grid-cols-3 gap-4 max-w-lg mx-auto animate-fade-in-up"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 max-w-3xl mx-auto animate-fade-in-up"
           style={{ animationDelay: "0.5s" }}
         >
-          <div className="flex flex-col items-center">
-            <Target className="w-6 h-6 text-accent mb-2" />
-            <p className="text-xl md:text-2xl font-bold stat-number">AI</p>
-            <p className="text-[10px] text-muted mt-1">Creator Matching</p>
+          <div className="flex flex-col items-center bg-card/50 border border-border rounded-xl p-4 hover:border-accent/30 transition">
+            <IndianRupee className="w-5 h-5 text-accent mb-2" />
+            <p className="text-sm font-bold">Pricing</p>
+            <p className="text-[9px] text-muted mt-0.5">Rate Estimates</p>
           </div>
-          <div className="flex flex-col items-center">
-            <Users className="w-6 h-6 text-accent mb-2" />
-            <p className="text-xl md:text-2xl font-bold stat-number">YT+IG</p>
-            <p className="text-[10px] text-muted mt-1">Cross-Platform</p>
+          <div className="flex flex-col items-center bg-card/50 border border-border rounded-xl p-4 hover:border-accent/30 transition">
+            <ShieldCheck className="w-5 h-5 text-success mb-2" />
+            <p className="text-sm font-bold">Audit</p>
+            <p className="text-[9px] text-muted mt-0.5">Trust Scores</p>
           </div>
-          <div className="flex flex-col items-center">
-            <FileText className="w-6 h-6 text-accent mb-2" />
-            <p className="text-xl md:text-2xl font-bold stat-number">Brief</p>
-            <p className="text-[10px] text-muted mt-1">Ready Deliverables</p>
+          <div className="flex flex-col items-center bg-card/50 border border-border rounded-xl p-4 hover:border-accent/30 transition">
+            <Percent className="w-5 h-5 text-warning mb-2" />
+            <p className="text-sm font-bold">ROI</p>
+            <p className="text-[9px] text-muted mt-0.5">CPM & Reach</p>
+          </div>
+          <div className="flex flex-col items-center bg-card/50 border border-border rounded-xl p-4 hover:border-accent/30 transition">
+            <Eye className="w-5 h-5 text-[#E4405F] mb-2" />
+            <p className="text-sm font-bold">Compete</p>
+            <p className="text-[9px] text-muted mt-0.5">Brand Tracking</p>
+          </div>
+          <div className="flex flex-col items-center bg-card/50 border border-border rounded-xl p-4 hover:border-accent/30 transition sm:col-span-1 col-span-2 sm:col-auto">
+            <GitCompareArrows className="w-5 h-5 text-accent-light mb-2" />
+            <p className="text-sm font-bold">Compare</p>
+            <p className="text-[9px] text-muted mt-0.5">Side-by-Side</p>
           </div>
         </div>
 
-        {/* Scroll indicator */}
         <div className="mt-12 flex justify-center animate-bounce">
           <button
             onClick={() => {

@@ -30,7 +30,14 @@ export interface InstagramProfile {
   followingCount: number;
   postCount: number;
   profilePicUrl: string;
+  profilePicUrlHD: string;
   isVerified: boolean;
+  isBusinessAccount: boolean;
+  businessCategoryName: string | null;
+  externalUrl: string | null;
+  highlightReelCount: number;
+  igtvVideoCount: number;
+  relatedProfiles: { username: string; fullName: string; isVerified: boolean }[];
   recentPosts: InstagramPost[];
   engagementRate: number;
   postFrequency: string;
@@ -43,6 +50,9 @@ export interface InstagramPost {
   commentCount: number;
   timestamp: string;
   type: string;
+  hashtags: string[];
+  mentions: string[];
+  url: string;
 }
 
 // Campaign types
@@ -79,6 +89,12 @@ export interface CreatorRecommendation {
   fitReason: string;
   estimatedReach: number;
   contentStyle: string;
+  isVerified?: boolean;
+  isBusinessAccount?: boolean;
+  businessCategory?: string;
+  externalUrl?: string;
+  postCount?: number;
+  topHashtags?: string[];
 }
 
 export interface CampaignAnalysis {

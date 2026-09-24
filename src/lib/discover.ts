@@ -94,11 +94,22 @@ export async function searchInstagramCreators(
               ? "Video-heavy"
               : "Mixed content"
             : "Unknown";
+
+        const allHashtags = posts.flatMap((p) => p.hashtags || []);
+        const hashtagCounts = new Map<string, number>();
+        for (const tag of allHashtags) {
+          hashtagCounts.set(tag, (hashtagCounts.get(tag) || 0) + 1);
+        }
+        const topHashtags = [...hashtagCounts.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([tag]) => tag);
+
         results.push({
           platform: "instagram",
           handle: profile.username,
           name: profile.fullName,
-          thumbnailUrl: profile.profilePicUrl,
+          thumbnailUrl: profile.profilePicUrlHD || profile.profilePicUrl,
           subscriberCount: profile.followerCount,
           engagementRate: profile.engagementRate,
           category: extractCategory(profile.biography, ""),
@@ -106,6 +117,12 @@ export async function searchInstagramCreators(
           fitReason: profile.biography?.slice(0, 200) || "",
           estimatedReach: Math.round(profile.followerCount * 0.05),
           contentStyle,
+          isVerified: profile.isVerified,
+          isBusinessAccount: profile.isBusinessAccount,
+          businessCategory: profile.businessCategoryName || undefined,
+          externalUrl: profile.externalUrl || undefined,
+          postCount: profile.postCount,
+          topHashtags,
         });
       }
     } catch {
