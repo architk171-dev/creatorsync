@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
+import ScrollReveal from "./ScrollReveal";
 
 const faqs = [
   {
@@ -34,42 +35,77 @@ const faqs = [
   },
 ];
 
+function AccordionItem({
+  faq,
+  isOpen,
+  onToggle,
+}: {
+  faq: { q: string; a: string };
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      setHeight(isOpen ? contentRef.current.scrollHeight : 0);
+    }
+  }, [isOpen]);
+
+  return (
+    <div className="bg-card border border-border rounded-xl overflow-hidden hover:border-accent/20 transition-colors">
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-5 py-4 text-left group cursor-pointer"
+      >
+        <span className="text-sm font-medium pr-4 group-hover:text-accent transition-colors">
+          {faq.q}
+        </span>
+        <ChevronDown
+          className={`w-4 h-4 text-muted shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-accent" : ""}`}
+        />
+      </button>
+      <div
+        style={{
+          height,
+          opacity: isOpen ? 1 : 0,
+          transition: "height 0.3s cubic-bezier(0.16,1,0.3,1), opacity 0.25s",
+          overflow: "hidden",
+        }}
+      >
+        <div ref={contentRef} className="px-5 pb-4">
+          <p className="text-sm text-muted leading-relaxed">{faq.a}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
     <section className="py-20 px-4 border-t border-border">
       <div className="max-w-2xl mx-auto">
-        <p className="text-accent text-xs font-semibold tracking-widest uppercase text-center mb-2">
-          Questions
-        </p>
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-          Frequently Asked
-        </h2>
+        <ScrollReveal>
+          <p className="text-accent text-xs font-semibold tracking-widest uppercase text-center mb-2">
+            Questions
+          </p>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+            Frequently Asked
+          </h2>
+        </ScrollReveal>
 
         <div className="space-y-2">
           {faqs.map((faq, i) => (
-            <div
-              key={i}
-              className="bg-card border border-border rounded-xl overflow-hidden"
-            >
-              <button
-                onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left"
-              >
-                <span className="text-sm font-medium pr-4">{faq.q}</span>
-                <ChevronDown
-                  className={`w-4 h-4 text-muted shrink-0 transition-transform ${openIndex === i ? "rotate-180" : ""}`}
-                />
-              </button>
-              {openIndex === i && (
-                <div className="px-5 pb-4">
-                  <p className="text-sm text-muted leading-relaxed">
-                    {faq.a}
-                  </p>
-                </div>
-              )}
-            </div>
+            <ScrollReveal key={i} delay={i * 60}>
+              <AccordionItem
+                faq={faq}
+                isOpen={openIndex === i}
+                onToggle={() => setOpenIndex(openIndex === i ? null : i)}
+              />
+            </ScrollReveal>
           ))}
         </div>
       </div>
