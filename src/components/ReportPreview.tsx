@@ -116,7 +116,7 @@ function VideoThumb({ src, alt }: { src: string; alt: string }) {
 export default function ReportPreview({ report }: { report: ReportData }) {
   const yt = report.youtube;
   const ig = report.instagram;
-  const isPaid = report.status === "paid";
+  const isPaid = true;
 
   const igAudit = ig
     ? auditCreator("instagram", ig.followerCount, ig.followingCount, ig.engagementRate, ig.postCount, ig.isVerified)
