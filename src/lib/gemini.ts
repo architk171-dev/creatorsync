@@ -26,8 +26,34 @@ async function generateWithRetry(prompt: string): Promise<string> {
   throw new Error("All Gemini models unavailable");
 }
 
+function getGoalLabels(brief: CampaignBrief): string {
+  const goalMap: Record<string, string> = {
+    awareness: "Brand Awareness",
+    conversions: "Conversions / Sales",
+    ugc: "User-Generated Content",
+    engagement: "Community Engagement",
+    launches: "Product Launch",
+  };
+  const goals = brief.campaignGoals?.length
+    ? brief.campaignGoals
+    : [brief.campaignGoal];
+  return goals.map((g) => goalMap[g] || g).join(" + ");
+}
+
+const BANNED_PHRASES = `
+CRITICAL: Your output must NOT contain any of these phrases or close variants:
+"leverage the creator's authentic voice", "resonate with the target audience",
+"create meaningful connections", "drive awareness", "build brand affinity",
+"tap into", "align with", "foster engagement", "craft compelling content",
+"elevate the brand", "maximize impact", "curate content", "amplify reach",
+"harness the power of", "create a buzz", "seamlessly integrate",
+"authentic engagement", "organic reach", "brand synergy".
+If you catch yourself writing any corporate-sounding filler, delete it and write what you actually mean in plain Hindi-English (Hinglish) or direct English.
+`.trim();
+
 export async function analyzeCampaignBrief(
-  brief: CampaignBrief
+  brief: CampaignBrief,
+  competitorContext?: string
 ): Promise<{
   criteria: CreatorCriteria;
   insights: {
@@ -35,9 +61,12 @@ export async function analyzeCampaignBrief(
     idealCreatorProfile: string;
     budgetAllocation: string;
     expectedOutcomes: string;
+    creativeIdeas: string[];
+    antiPatterns: string[];
   };
 }> {
   const budgetLabels: Record<string, string> = {
+    "under-50K": "Under ₹50,000",
     "under-1L": "Under ₹1 Lakh",
     "1L-5L": "₹1-5 Lakhs",
     "5L-15L": "₹5-15 Lakhs",
@@ -45,17 +74,26 @@ export async function analyzeCampaignBrief(
     "above-50L": "Above ₹50 Lakhs",
   };
 
-  const prompt = `You are an influencer marketing strategist for Indian brands. Analyze this campaign brief and provide creator selection criteria and strategic insights.
+  const competitorBlock = competitorContext
+    ? `\nCOMPETITOR INTEL (what similar brands are already doing — your ideas MUST be different):\n${competitorContext}\n\nIMPORTANT: Every creative idea you suggest must explicitly NOT repeat what these competitors have done. Reference what they did and explain why your idea is different.`
+    : "";
+
+  const prompt = `You are a senior influencer marketing strategist who has run 200+ campaigns for Indian D2C brands. You hate generic advice. You speak in specifics — exact video formats, exact hooks, exact scenes.
+
+${BANNED_PHRASES}
 
 CAMPAIGN BRIEF:
 - Brand: ${brief.brandName}
 - Category: ${brief.category}
-- Goal: ${brief.campaignGoal}
+- Goals: ${getGoalLabels(brief)}
 - Target Audience: ${brief.targetAudience}
 - Platforms: ${brief.platforms.join(", ")}
 - Budget: ${budgetLabels[brief.budgetRange] || brief.budgetRange}
 - Geography: ${brief.geography}
 - Description: ${brief.description}
+${competitorBlock}
+
+YOUR JOB: Give specific, surprising, actually-executable campaign ideas. Not "create engaging content" — instead "Creator opens video unboxing a competitor's product, uses it for 30 seconds, then switches to ${brief.brandName} and shows the exact difference."
 
 Respond ONLY with valid JSON (no markdown, no code fences):
 {
@@ -69,10 +107,19 @@ Respond ONLY with valid JSON (no markdown, no code fences):
     "reasoning": "<2-3 sentences on why these criteria>"
   },
   "insights": {
-    "campaignStrategy": "<3-4 sentences on how to run this campaign effectively>",
-    "idealCreatorProfile": "<2-3 sentences describing the perfect creator for this campaign>",
-    "budgetAllocation": "<2-3 sentences on how to split budget across creators and platforms>",
-    "expectedOutcomes": "<2-3 sentences on realistic KPIs and expected results>"
+    "campaignStrategy": "<3-4 sentences. Be specific: name exact content formats (YouTube Shorts vs long-form, Reels vs carousel), exact posting cadence (e.g. 'Drop teaser Reel on Monday, full video Thursday, Story poll Friday'), and why this sequence works for ${brief.brandName} specifically — not any random brand>",
+    "idealCreatorProfile": "<2-3 sentences. Don't say 'tech creator with engaged audience'. Say 'A creator who does comparison/review content, has done at least 2 brand deals in the last 3 months but NOT with ${brief.brandName}'s direct competitors, and whose comment section shows real product questions not just fire emojis'>",
+    "budgetAllocation": "<2-3 sentences with actual percentage splits and reasoning. e.g. '60% on 2 mid-tier creators (5-15L subs) for dedicated videos, 30% on 5 nano creators (10-50K) for Instagram Reels creating a wave effect, 10% for boosting the best-performing piece'>",
+    "expectedOutcomes": "<2-3 sentences with specific number ranges, not vague promises. e.g. 'With this budget and creator mix, expect 5-8L total views across YouTube, 15K-25K profile visits, and a 2-3x spike in brand search volume within 2 weeks of launch'>",
+    "creativeIdeas": [
+      "<Idea 1: A specific, scene-by-scene content concept. Start with the hook, describe the middle, end with the CTA. 2-3 sentences. Must be something this specific brand can do that a generic brand cannot.>",
+      "<Idea 2: A different format/angle entirely. If Idea 1 is a YouTube video, make this an Instagram series or a challenge.>",
+      "<Idea 3: An unconventional idea that breaks the category norm. What would make someone screenshot this and share it?>"
+    ],
+    "antiPatterns": [
+      "<What NOT to do: A specific mistake brands in ${brief.category} commonly make with influencer campaigns, and why it backfires>",
+      "<Another common mistake to avoid>"
+    ]
   }
 }`;
 
@@ -81,7 +128,16 @@ Respond ONLY with valid JSON (no markdown, no code fences):
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error("Failed to parse Gemini response");
 
-  return JSON.parse(jsonMatch[0]);
+  const parsed = JSON.parse(jsonMatch[0]);
+
+  if (!parsed.insights.creativeIdeas) {
+    parsed.insights.creativeIdeas = [];
+  }
+  if (!parsed.insights.antiPatterns) {
+    parsed.insights.antiPatterns = [];
+  }
+
+  return parsed;
 }
 
 export async function scoreCreatorFit(
@@ -103,6 +159,7 @@ export async function scoreCreatorFit(
     fitReason: string;
     contentStyle: string;
     estimatedReach: number;
+    instagramUrl?: string;
   }[]
 > {
   if (!creators.length) return [];
@@ -114,11 +171,13 @@ export async function scoreCreatorFit(
     )
     .join("\n");
 
-  const prompt = `You are an influencer marketing expert. Score each creator's fit for this campaign.
+  const prompt = `You are an influencer marketing expert who scores creators based on REAL fit, not vibes. A creator with 500K followers and 8% engagement in the wrong niche scores lower than a 50K creator with 3% engagement in the exact right niche.
+
+${BANNED_PHRASES}
 
 CAMPAIGN:
 - Brand: ${brief.brandName} (${brief.category})
-- Goal: ${brief.campaignGoal}
+- Goals: ${getGoalLabels(brief)}
 - Target Audience: ${brief.targetAudience}
 - Geography: ${brief.geography}
 - Description: ${brief.description}
@@ -126,14 +185,19 @@ CAMPAIGN:
 CREATORS:
 ${creatorsText}
 
-For each creator, respond ONLY with a valid JSON array (no markdown, no code fences):
+Score each creator honestly. If they're a bad fit, say so — don't sugarcoat with "while not a perfect match, they bring unique value." Just say "Poor fit because X."
+
+For each creator, also try to provide their Instagram handle/URL if you know it (even if they were found on YouTube).
+
+Respond ONLY with a valid JSON array (no markdown, no code fences):
 [
   {
     "handle": "<handle>",
     "fitScore": <0-100>,
-    "fitReason": "<1-2 sentences explaining why this creator fits or doesn't fit the campaign>",
+    "fitReason": "<1-2 direct sentences. Be blunt. 'Great fit because their last 5 videos were gadget reviews and their audience comments about purchase decisions' or 'Poor fit — lifestyle creator whose audience cares about fashion, not finance'>",
     "contentStyle": "<brief description of their content style>",
-    "estimatedReach": <estimated total reach for a sponsored post/video>
+    "estimatedReach": <estimated total reach for a sponsored post/video>,
+    "instagramUrl": "<their Instagram profile URL if known, e.g. https://instagram.com/username, or null>"
   }
 ]`;
 
@@ -168,8 +232,15 @@ export async function generateDeliverableBrief(
   compensationNotes: string;
   hashtags: string[];
   callToAction: string;
+  creatorScript: {
+    hook: string;
+    body: string[];
+    cta: string;
+    notes: string;
+  };
 }> {
   const budgetLabels: Record<string, string> = {
+    "under-50K": "Under ₹50,000",
     "under-1L": "Under ₹1 Lakh",
     "1L-5L": "₹1-5 Lakhs",
     "5L-15L": "₹5-15 Lakhs",
@@ -177,12 +248,14 @@ export async function generateDeliverableBrief(
     "above-50L": "Above ₹50 Lakhs",
   };
 
-  const prompt = `You are an influencer marketing expert creating a deliverable brief for a brand to give to a creator. This brief tells the creator exactly how to execute their content deliverable for the campaign.
+  const prompt = `You are a creative director writing a deliverable brief AND a creator script for a brand campaign. The script should feel like something the creator would actually say — not a corporate press release read aloud.
+
+${BANNED_PHRASES}
 
 CAMPAIGN:
 - Brand: ${brief.brandName}
 - Category: ${brief.category}
-- Goal: ${brief.campaignGoal}
+- Goals: ${getGoalLabels(brief)}
 - Target Audience: ${brief.targetAudience}
 - Budget: ${budgetLabels[brief.budgetRange] || brief.budgetRange}
 - Geography: ${brief.geography}
@@ -197,11 +270,17 @@ CREATOR:
 - Style: ${creator.contentStyle}
 - Fit: ${creator.fitReason}
 
-Generate a comprehensive deliverable brief. Respond ONLY with valid JSON (no markdown, no code fences):
+SCRIPT GUIDELINES:
+- Write the hook as exactly what the creator says in the first 3 seconds. It should stop the scroll. Not "Hey guys, today I'm going to..." — instead a question, a bold claim, or a visual hook description.
+- The body should be 4-6 bullet points, each one being a talking point (not word-for-word script — creators hate that). Each point is 1-2 sentences describing what to say/show.
+- The CTA should be natural, not "Link in bio, use code XYZ for 10% off." Think about what would actually make the viewer act.
+- Notes are production tips: lighting, b-roll suggestions, transitions, music mood.
+
+Respond ONLY with valid JSON (no markdown, no code fences):
 {
-  "overview": "<2-3 sentences summarizing the campaign and what the creator needs to do>",
+  "overview": "<2-3 sentences summarizing the campaign and what the creator needs to do — be specific about the content piece, not vague 'create engaging content'>",
   "contentFormat": ["<specific content formats e.g. Instagram Reel, YouTube Short, Story series>"],
-  "keyMessaging": ["<3-5 key messaging points the creator must include>"],
+  "keyMessaging": ["<3-5 key messaging points — written as actual talking points, not corporate bullet points>"],
   "brandGuidelines": ["<3-5 brand guidelines for tone, visual style, and messaging>"],
   "dosAndDonts": {
     "dos": ["<5-6 specific things the creator should do>"],
@@ -215,7 +294,18 @@ Generate a comprehensive deliverable brief. Respond ONLY with valid JSON (no mar
   ],
   "compensationNotes": "<1-2 sentences about payment structure based on budget>",
   "hashtags": ["<5-8 relevant campaign hashtags>"],
-  "callToAction": "<the specific CTA the creator should use>"
+  "callToAction": "<the specific CTA the creator should use>",
+  "creatorScript": {
+    "hook": "<The exact opening line/scene. 1-2 sentences. This is what stops the scroll.>",
+    "body": [
+      "<Talking point 1: What to say and what to show on screen. 1-2 sentences.>",
+      "<Talking point 2>",
+      "<Talking point 3>",
+      "<Talking point 4>"
+    ],
+    "cta": "<The natural closing + call to action. 1-2 sentences.>",
+    "notes": "<Production notes: suggested b-roll, transitions, music mood, lighting tips. 2-3 sentences.>"
+  }
 }`;
 
   const text = await generateWithRetry(prompt);

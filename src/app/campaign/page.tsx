@@ -35,8 +35,12 @@ import {
   SquareCheck,
   Square,
   GitCompareArrows,
+  Ban,
+  Sparkles,
+  Clapperboard,
+  Camera,
 } from "lucide-react";
-import { CampaignBrief, CampaignAnalysis, CreatorRecommendation } from "@/lib/types";
+import { CampaignBrief, CampaignAnalysis, CampaignGoal, CreatorRecommendation } from "@/lib/types";
 import { estimateCreatorPricing, formatPrice } from "@/lib/pricing";
 import { auditCreator, AuditResult } from "@/lib/audit";
 import { calculateROI, getBudgetNumber, formatCurrency } from "@/lib/roi";
@@ -91,7 +95,7 @@ const CATEGORIES = [
   "Other",
 ];
 
-const GOALS = [
+const GOALS: { value: CampaignGoal; label: string; icon: React.ComponentType<{ className?: string }>; desc: string }[] = [
   { value: "awareness", label: "Brand Awareness", icon: Eye, desc: "Maximize reach and impressions" },
   { value: "conversions", label: "Conversions / Sales", icon: TrendingUp, desc: "Drive purchases and sign-ups" },
   { value: "ugc", label: "User-Generated Content", icon: Users, desc: "Get authentic creator content" },
@@ -100,7 +104,8 @@ const GOALS = [
 ];
 
 const BUDGETS = [
-  { value: "under-1L", label: "Under ₹1 Lakh", desc: "Nano/micro creators" },
+  { value: "under-50K", label: "Under ₹50K", desc: "Nano creators / barter" },
+  { value: "under-1L", label: "₹50K-1 Lakh", desc: "Nano/micro creators" },
   { value: "1L-5L", label: "₹1-5 Lakhs", desc: "Micro/mid-tier mix" },
   { value: "5L-15L", label: "₹5-15 Lakhs", desc: "Mid-tier + macro" },
   { value: "15L-50L", label: "₹15-50 Lakhs", desc: "Macro + celebrity" },
@@ -128,6 +133,12 @@ interface DeliverableBrief {
   compensationNotes: string;
   hashtags: string[];
   callToAction: string;
+  creatorScript?: {
+    hook: string;
+    body: string[];
+    cta: string;
+    notes: string;
+  };
 }
 
 export default function CampaignPage() {
@@ -145,16 +156,31 @@ export default function CampaignPage() {
   const [brief, setBrief] = useState<CampaignBrief>({
     brandName: "",
     category: "",
+    campaignGoals: [],
     campaignGoal: "awareness",
     targetAudience: "",
     platforms: ["youtube", "instagram"],
     budgetRange: "1L-5L",
     geography: "India",
     description: "",
+    competitorBrands: [],
   });
 
   function updateBrief(updates: Partial<CampaignBrief>) {
     setBrief((prev) => ({ ...prev, ...updates }));
+  }
+
+  function toggleGoal(goal: CampaignGoal) {
+    setBrief((prev) => {
+      const goals = prev.campaignGoals.includes(goal)
+        ? prev.campaignGoals.filter((g) => g !== goal)
+        : [...prev.campaignGoals, goal];
+      return {
+        ...prev,
+        campaignGoals: goals,
+        campaignGoal: goals[0] || "awareness",
+      };
+    });
   }
 
   function togglePlatform(p: "youtube" | "instagram") {
@@ -222,6 +248,10 @@ export default function CampaignPage() {
   async function handleSubmit() {
     if (!brief.brandName || !brief.category || !brief.targetAudience) {
       setError("Please fill in all required fields");
+      return;
+    }
+    if (brief.campaignGoals.length === 0) {
+      setError("Please select at least one campaign goal");
       return;
     }
 
@@ -328,18 +358,32 @@ export default function CampaignPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Campaign Goal <span className="text-accent">*</span></label>
+                <label className="block text-sm font-medium mb-2">
+                  Campaign Goals <span className="text-accent">*</span>
+                  <span className="text-xs text-muted font-normal ml-2">(select one or more)</span>
+                </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {GOALS.map((goal) => (
-                    <button key={goal.value} onClick={() => updateBrief({ campaignGoal: goal.value as CampaignBrief["campaignGoal"] })} className={`flex items-start gap-3 p-4 rounded-xl border transition text-left ${brief.campaignGoal === goal.value ? "bg-accent/10 border-accent" : "bg-card border-border hover:border-accent/50"}`}>
-                      <goal.icon className={`w-5 h-5 mt-0.5 shrink-0 ${brief.campaignGoal === goal.value ? "text-accent" : "text-muted"}`} />
-                      <div>
-                        <p className="text-sm font-semibold">{goal.label}</p>
-                        <p className="text-xs text-muted mt-0.5">{goal.desc}</p>
-                      </div>
-                    </button>
-                  ))}
+                  {GOALS.map((goal) => {
+                    const isSelected = brief.campaignGoals.includes(goal.value);
+                    return (
+                      <button key={goal.value} onClick={() => toggleGoal(goal.value)} className={`flex items-start gap-3 p-4 rounded-xl border transition text-left ${isSelected ? "bg-accent/10 border-accent" : "bg-card border-border hover:border-accent/50"}`}>
+                        <div className="relative mt-0.5 shrink-0">
+                          <goal.icon className={`w-5 h-5 ${isSelected ? "text-accent" : "text-muted"}`} />
+                          {isSelected && (
+                            <CheckCircle2 className="w-3 h-3 text-accent absolute -top-1 -right-1" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold">{goal.label}</p>
+                          <p className="text-xs text-muted mt-0.5">{goal.desc}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
+                {brief.campaignGoals.length > 1 && (
+                  <p className="text-xs text-accent mt-2">{brief.campaignGoals.length} goals selected — AI will optimize for all of them</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Target Platforms <span className="text-accent">*</span></label>
@@ -351,7 +395,7 @@ export default function CampaignPage() {
                   ))}
                 </div>
               </div>
-              <button onClick={() => { if (!brief.brandName || !brief.category) { setError("Please fill in brand name and category"); return; } setError(""); setStep(2); }} className="w-full bg-accent hover:bg-accent-light text-white py-4 rounded-xl font-semibold text-base transition flex items-center justify-center gap-2 cursor-pointer">
+              <button onClick={() => { if (!brief.brandName || !brief.category) { setError("Please fill in brand name and category"); return; } if (brief.campaignGoals.length === 0) { setError("Please select at least one campaign goal"); return; } setError(""); setStep(2); }} className="w-full bg-accent hover:bg-accent-light text-white py-4 rounded-xl font-semibold text-base transition flex items-center justify-center gap-2 cursor-pointer">
                 Continue <ChevronRight className="w-5 h-5" />
               </button>
               {error && <p className="text-danger text-sm text-center">{error}</p>}
@@ -391,12 +435,31 @@ export default function CampaignPage() {
                 <label className="block text-sm font-medium mb-2">Campaign Description</label>
                 <textarea value={brief.description} onChange={(e) => updateBrief({ description: e.target.value })} rows={3} placeholder="Describe what you're promoting, key messaging, any specific requirements..." className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted focus:outline-none focus:border-accent transition resize-none" />
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Competitor Brands <span className="text-xs text-muted font-normal">(optional — helps AI generate unique ideas)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Noise, Fire-Boltt, boAt (comma-separated)"
+                  className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted focus:outline-none focus:border-accent transition"
+                  onBlur={(e) => {
+                    const brands = e.target.value
+                      .split(",")
+                      .map((b) => b.trim())
+                      .filter(Boolean);
+                    updateBrief({ competitorBrands: brands });
+                  }}
+                  defaultValue={brief.competitorBrands?.join(", ") || ""}
+                />
+                <p className="text-[10px] text-muted mt-1">AI will analyze their campaigns and generate ideas that stand apart</p>
+              </div>
               <div className="flex gap-3">
                 <button onClick={() => setStep(1)} className="px-6 py-4 rounded-xl border border-border text-muted hover:text-foreground transition cursor-pointer">
                   <ArrowLeft className="w-5 h-5" />
                 </button>
                 <button onClick={handleSubmit} disabled={loading} className="flex-1 bg-accent hover:bg-accent-light text-white py-4 rounded-xl font-semibold text-base transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
-                  {loading ? (<><Loader2 className="w-5 h-5 animate-spin" /> AI is analyzing your campaign...</>) : (<><Search className="w-5 h-5" /> Find Creators with AI</>)}
+                  {loading ? (<><Loader2 className="w-5 h-5 animate-spin" /> AI is analyzing your campaign...</>) : (<><Sparkles className="w-5 h-5" /> Generate Campaign Ideas &amp; Find Creators</>)}
                 </button>
               </div>
               {error && <p className="text-danger text-sm text-center">{error}</p>}
@@ -413,7 +476,7 @@ export default function CampaignPage() {
                   Campaign Plan for <span className="text-accent">{analysis.brief.brandName}</span>
                 </h1>
                 <p className="text-sm text-muted mt-1">
-                  {analysis.brief.category} · {analysis.brief.campaignGoal} · {analysis.recommendations.length} creators found
+                  {analysis.brief.category} · {(analysis.brief.campaignGoals || [analysis.brief.campaignGoal]).join(", ")} · {analysis.recommendations.length} creators found
                 </p>
               </div>
               <button onClick={() => { setAnalysis(null); setStep(1); setCompareIds(new Set()); }} className="text-sm text-accent hover:text-accent-light transition">
@@ -427,6 +490,40 @@ export default function CampaignPage() {
               <InsightCard icon={<DollarSign className="w-5 h-5" />} title="Budget Allocation" text={analysis.aiInsights.budgetAllocation} />
               <InsightCard icon={<BarChart3 className="w-5 h-5" />} title="Expected Outcomes" text={analysis.aiInsights.expectedOutcomes} />
             </div>
+
+            {/* Creative Ideas */}
+            {analysis.aiInsights.creativeIdeas && analysis.aiInsights.creativeIdeas.length > 0 && (
+              <div className="bg-gradient-to-br from-accent/5 to-accent/10 border border-accent/20 rounded-2xl p-6 mb-8">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-accent mb-4 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" /> Creative Campaign Ideas
+                </h3>
+                <div className="space-y-4">
+                  {analysis.aiInsights.creativeIdeas.map((idea, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <span className="w-7 h-7 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i + 1}</span>
+                      <p className="text-sm text-foreground leading-relaxed">{idea}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Anti-Patterns */}
+            {analysis.aiInsights.antiPatterns && analysis.aiInsights.antiPatterns.length > 0 && (
+              <div className="bg-danger/5 border border-danger/20 rounded-2xl p-6 mb-8">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-danger mb-4 flex items-center gap-2">
+                  <Ban className="w-4 h-4" /> What NOT to Do
+                </h3>
+                <div className="space-y-3">
+                  {analysis.aiInsights.antiPatterns.map((pattern, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <span className="text-danger font-bold shrink-0 mt-0.5">✕</span>
+                      <p className="text-sm text-muted leading-relaxed">{pattern}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="bg-card rounded-2xl border border-border p-6 mb-8">
               <h3 className="text-sm font-bold uppercase tracking-wider text-accent mb-3">AI-Generated Creator Criteria</h3>
@@ -514,7 +611,7 @@ export default function CampaignPage() {
                 {briefLoading && (
                   <div className="flex flex-col items-center py-16 gap-4">
                     <Loader2 className="w-8 h-8 text-accent animate-spin" />
-                    <p className="text-sm text-muted">AI is crafting the deliverable brief...</p>
+                    <p className="text-sm text-muted">AI is crafting the deliverable brief &amp; creator script...</p>
                   </div>
                 )}
                 {briefError && (
@@ -537,6 +634,41 @@ export default function CampaignPage() {
                         ))}
                       </div>
                     </div>
+
+                    {/* Creator Script */}
+                    {deliverableBrief.creatorScript && (
+                      <div className="bg-gradient-to-br from-accent/5 to-accent/10 border border-accent/30 rounded-xl p-5">
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-accent mb-4 flex items-center gap-2">
+                          <Clapperboard className="w-4 h-4" /> Creator Script
+                        </h3>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-[10px] text-accent font-bold uppercase tracking-wider mb-1">Hook (First 3 Seconds)</p>
+                            <p className="text-sm text-foreground font-medium bg-background/50 rounded-lg p-3 border border-accent/20 italic">&ldquo;{deliverableBrief.creatorScript.hook}&rdquo;</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-accent font-bold uppercase tracking-wider mb-2">Talking Points</p>
+                            <div className="space-y-2">
+                              {deliverableBrief.creatorScript.body.map((point, i) => (
+                                <div key={i} className="flex items-start gap-2 text-sm text-muted">
+                                  <span className="w-5 h-5 rounded-full bg-accent/20 text-accent flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">{i + 1}</span>
+                                  {point}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-accent font-bold uppercase tracking-wider mb-1">Closing &amp; CTA</p>
+                            <p className="text-sm text-foreground bg-background/50 rounded-lg p-3 border border-accent/20">{deliverableBrief.creatorScript.cta}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted font-bold uppercase tracking-wider mb-1">Production Notes</p>
+                            <p className="text-xs text-muted leading-relaxed">{deliverableBrief.creatorScript.notes}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div>
                       <h3 className="text-sm font-bold uppercase tracking-wider text-accent mb-2">Key Messaging Points</h3>
                       <ul className="space-y-2">
@@ -687,6 +819,8 @@ function CreatorCard({ creator, budgetRange, onDeepReport, isComparing, onToggle
 
   const mainRate = pricing.rates[0];
 
+  const igUrl = creator.instagramUrl || (creator.platform === "instagram" ? `https://instagram.com/${creator.handle}` : null);
+
   return (
     <div className={`bg-card rounded-2xl border transition ${isComparing ? "border-accent" : "border-border hover:border-accent/30"}`}>
       <div className="p-5">
@@ -702,10 +836,24 @@ function CreatorCard({ creator, budgetRange, onDeepReport, isComparing, onToggle
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${scoreColor}`}>{creator.fitScore}%</span>
               <TrustBadge audit={audit} />
             </div>
-            <p className="text-xs text-muted">
-              @{creator.handle} · <span className="capitalize">{creator.platform}</span>
-              {creator.isBusinessAccount && <span className="ml-1 text-accent">· Business</span>}
-            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-xs text-muted">
+                @{creator.handle} · <span className="capitalize">{creator.platform}</span>
+                {creator.isBusinessAccount && <span className="ml-1 text-accent">· Business</span>}
+              </p>
+              {igUrl && (
+                <a
+                  href={igUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[10px] text-pink-400 hover:text-pink-300 transition"
+                >
+                  <Camera className="w-3 h-3" />
+                  Instagram
+                  <ExternalLink className="w-2.5 h-2.5" />
+                </a>
+              )}
+            </div>
           </div>
         </div>
 

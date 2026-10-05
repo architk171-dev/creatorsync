@@ -56,15 +56,19 @@ export interface InstagramPost {
 }
 
 // Campaign types
+export type CampaignGoal = "awareness" | "conversions" | "ugc" | "engagement" | "launches";
+
 export interface CampaignBrief {
   brandName: string;
   category: string;
-  campaignGoal: "awareness" | "conversions" | "ugc" | "engagement" | "launches";
+  campaignGoals: CampaignGoal[];
+  campaignGoal: CampaignGoal;
   targetAudience: string;
   platforms: ("youtube" | "instagram")[];
-  budgetRange: "under-1L" | "1L-5L" | "5L-15L" | "15L-50L" | "above-50L";
+  budgetRange: "under-1L" | "under-50K" | "1L-5L" | "5L-15L" | "15L-50L" | "above-50L";
   geography: string;
   description: string;
+  competitorBrands?: string[];
 }
 
 export interface CreatorCriteria {
@@ -95,6 +99,7 @@ export interface CreatorRecommendation {
   externalUrl?: string;
   postCount?: number;
   topHashtags?: string[];
+  instagramUrl?: string;
 }
 
 export interface CampaignAnalysis {
@@ -107,6 +112,8 @@ export interface CampaignAnalysis {
     idealCreatorProfile: string;
     budgetAllocation: string;
     expectedOutcomes: string;
+    creativeIdeas?: string[];
+    antiPatterns?: string[];
   };
   createdAt: string;
 }

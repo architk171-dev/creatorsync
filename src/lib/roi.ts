@@ -54,6 +54,7 @@ export function calculateROI(
 
 export function getBudgetNumber(budgetRange: string): number {
   const map: Record<string, number> = {
+    "under-50K": 35_000,
     "under-1L": 75_000,
     "1L-5L": 300_000,
     "5L-15L": 1_000_000,
