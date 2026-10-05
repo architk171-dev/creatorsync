@@ -16,7 +16,9 @@ const CACHE_TTL = 24 * 60 * 60 * 1000;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { youtubeHandle, instagramHandle, email } = body;
+    const { youtubeHandle, email } = body;
+    const instagramHandles: string[] = body.instagramHandles || [];
+    const instagramHandle: string = body.instagramHandle || instagramHandles[0] || "";
 
     if (!youtubeHandle && !instagramHandle) {
       return NextResponse.json(
@@ -134,13 +136,15 @@ export async function POST(request: NextRequest) {
     if (instagramHandle) {
       try {
         report.instagram = await getInstagramProfile(instagramHandle);
-      } catch {
+      } catch (igErr) {
+        const igMessage = igErr instanceof Error ? igErr.message : "Instagram profile not found";
         if (!youtubeHandle) {
           return NextResponse.json(
-            { error: "Instagram profile not found" },
+            { error: igMessage },
             { status: 404 }
           );
         }
+        console.warn("Instagram fetch failed (YouTube present, continuing):", igMessage);
       }
     }
 

@@ -115,7 +115,8 @@ function VideoThumb({ src, alt }: { src: string; alt: string }) {
 
 export default function ReportPreview({ report }: { report: ReportData }) {
   const yt = report.youtube;
-  const ig = report.instagram;
+  const rawIg = report.instagram;
+  const ig = rawIg && rawIg.followerCount > 0 ? rawIg : null;
   const isPaid = true;
 
   const igAudit = ig
@@ -207,7 +208,7 @@ export default function ReportPreview({ report }: { report: ReportData }) {
                 {new Date(report.createdAt).toLocaleDateString("en-IN")}
               </span>
             </div>
-            {ig?.externalUrl && (
+            {ig?.externalUrl && typeof ig.externalUrl === "string" && (
               <a
                 href={ig.externalUrl}
                 target="_blank"

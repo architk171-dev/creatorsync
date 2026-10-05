@@ -9,6 +9,7 @@ export async function getInstagramProfile(
     .trim()
     .replace(/^@/, "")
     .replace(/^https?:\/\/(www\.)?instagram\.com\//, "")
+    .replace(/[?#].*$/, "")
     .replace(/\/$/, "");
 
   const runInput = {
@@ -37,6 +38,13 @@ export async function getInstagramProfile(
   }
 
   const profile = data[0];
+
+  if (!profile.followersCount && !profile.postsCount) {
+    throw new Error(
+      `Could not fetch data for @${cleaned} — the account may be private or the handle may be incorrect`
+    );
+  }
+
   const posts: InstagramPost[] = (profile.latestPosts || [])
     .slice(0, 12)
     .map(
@@ -76,7 +84,12 @@ export async function getInstagramProfile(
 
   const postFrequency = calculatePostFrequency(posts);
 
-  const externalUrls: string[] = profile.externalUrls || [];
+  const rawExtUrls = profile.externalUrls || profile.externalUrl;
+  const externalUrls: string[] = Array.isArray(rawExtUrls)
+    ? rawExtUrls.filter((u: unknown) => typeof u === "string")
+    : typeof rawExtUrls === "string"
+      ? [rawExtUrls]
+      : [];
   const relatedProfiles = (profile.relatedProfiles || []).slice(0, 5).map(
     (rp: { username: string; full_name: string; is_verified: boolean }) => ({
       username: rp.username,
