@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4 text-accent" />
           <span className="text-sm font-bold">
-            Creator<span className="text-accent">Sync</span>
+            NoCap<span className="text-accent">Verify</span>
           </span>
         </div>
 
@@ -27,7 +27,7 @@ export default function Footer() {
         </div>
 
         <p className="text-[10px] text-muted">
-          &copy; {new Date().getFullYear()} CreatorSync
+          &copy; {new Date().getFullYear()} NoCap Verify
         </p>
       </div>
     </footer>

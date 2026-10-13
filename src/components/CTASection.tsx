@@ -35,8 +35,7 @@ export default function CTASection() {
             </button>
           </div>
           <p className="text-xs text-muted mt-4">
-            Campaign Planner is free. Individual verified reports at ₹2,500
-            (launch offer).
+            Everything is free to use — Campaign Planner, creator reports, and competitor intel.
           </p>
         </ScrollReveal>
       </div>

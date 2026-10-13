@@ -12,8 +12,6 @@ import {
   ThumbsUp,
   MessageSquare,
   Clock,
-  Lock,
-  Download,
   CheckCircle,
   BadgeCheck,
   Briefcase,
@@ -28,6 +26,7 @@ import {
   UserCheck,
   AlertTriangle,
   CircleAlert,
+  Camera,
 } from "lucide-react";
 import { ReportData, InstagramPost } from "@/lib/types";
 import { estimateCreatorPricing, formatPrice } from "@/lib/pricing";
@@ -117,7 +116,6 @@ export default function ReportPreview({ report }: { report: ReportData }) {
   const yt = report.youtube;
   const rawIg = report.instagram;
   const ig = rawIg && rawIg.followerCount > 0 ? rawIg : null;
-  const isPaid = true;
 
   const igAudit = ig
     ? auditCreator("instagram", ig.followerCount, ig.followingCount, ig.engagementRate, ig.postCount, ig.isVerified)
@@ -236,7 +234,7 @@ export default function ReportPreview({ report }: { report: ReportData }) {
         </div>
 
         <p
-          className={`text-sm mb-4 leading-relaxed ${isPaid ? "" : "blur-metric"}`}
+          className={`text-sm mb-4 leading-relaxed `}
         >
           {report.verdict.summary}
         </p>
@@ -245,7 +243,7 @@ export default function ReportPreview({ report }: { report: ReportData }) {
           <div className="bg-background/50 rounded-xl p-3">
             <p className="text-[10px] text-muted mb-1">Engagement</p>
             <div
-              className={`flex items-center gap-1 ${isPaid ? "" : "blur-metric"}`}
+              className={`flex items-center gap-1 `}
             >
               <CheckCircle
                 className={`w-3.5 h-3.5 ${report.verdict.engagementVerdict === "above" ? "text-success" : report.verdict.engagementVerdict === "below" ? "text-danger" : "text-warning"}`}
@@ -276,6 +274,75 @@ export default function ReportPreview({ report }: { report: ReportData }) {
         </div>
       </div>
 
+      {/* Creator Performance Summary */}
+      {(yt || ig) && (
+        <div className="bg-gradient-to-r from-accent/5 to-card rounded-2xl border border-accent/20 p-6 mb-4">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-accent mb-4">
+            Creator Performance
+          </h3>
+          <div className="space-y-3">
+            {yt && yt.topVideos.length > 0 && (() => {
+              const videos = yt.topVideos;
+              const totalViews = videos.reduce((s, v) => s + v.viewCount, 0);
+              const totalLikes = videos.reduce((s, v) => s + v.likeCount, 0);
+              const totalComments = videos.reduce((s, v) => s + v.commentCount, 0);
+              const engRate = totalViews > 0 ? Math.round(((totalLikes + totalComments) / totalViews) * 10000) / 100 : 0;
+              return (
+                <div>
+                  <p className="text-[10px] text-muted mb-2 flex items-center gap-1">
+                    <Video className="w-3 h-3" /> YouTube · {videos.length} recent videos
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-background/50 rounded-xl p-2.5">
+                      <p className="text-[9px] text-muted">Avg. Views</p>
+                      <p className="text-base font-bold">{formatNumber(Math.round(totalViews / videos.length))}</p>
+                    </div>
+                    <div className="bg-background/50 rounded-xl p-2.5">
+                      <p className="text-[9px] text-muted">Avg. Likes</p>
+                      <p className="text-base font-bold">{formatNumber(Math.round(totalLikes / videos.length))}</p>
+                    </div>
+                    <div className="bg-background/50 rounded-xl p-2.5">
+                      <p className="text-[9px] text-muted">Avg. Comments</p>
+                      <p className="text-base font-bold">{formatNumber(Math.round(totalComments / videos.length))}</p>
+                    </div>
+                    <div className="bg-background/50 rounded-xl p-2.5">
+                      <p className="text-[9px] text-muted">Engagement Rate</p>
+                      <p className="text-base font-bold text-accent">{engRate}%</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+            {ig && ig.recentPosts.length > 0 && (() => {
+              const posts = ig.recentPosts;
+              const totalLikes = posts.reduce((s, p) => s + (p.likeCount || 0), 0);
+              const totalComments = posts.reduce((s, p) => s + (p.commentCount || 0), 0);
+              return (
+                <div>
+                  <p className="text-[10px] text-muted mb-2 flex items-center gap-1">
+                    <Camera className="w-3 h-3" /> Instagram · {posts.length} recent posts
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="bg-background/50 rounded-xl p-2.5">
+                      <p className="text-[9px] text-muted">Avg. Likes</p>
+                      <p className="text-base font-bold">{formatNumber(Math.round(totalLikes / posts.length))}</p>
+                    </div>
+                    <div className="bg-background/50 rounded-xl p-2.5">
+                      <p className="text-[9px] text-muted">Avg. Comments</p>
+                      <p className="text-base font-bold">{formatNumber(Math.round(totalComments / posts.length))}</p>
+                    </div>
+                    <div className="bg-background/50 rounded-xl p-2.5">
+                      <p className="text-[9px] text-muted">Engagement Rate</p>
+                      <p className="text-base font-bold text-accent">{ig.engagementRate}%</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
       {/* YouTube Metrics */}
       {yt && (
         <>
@@ -293,7 +360,6 @@ export default function ReportPreview({ report }: { report: ReportData }) {
                 icon={<Eye className="w-4 h-4" />}
                 label="Total Views"
                 value={formatNumber(yt.channel.viewCount)}
-                blurred={!isPaid}
               />
               <MetricCard
                 icon={<Video className="w-4 h-4" />}
@@ -304,7 +370,6 @@ export default function ReportPreview({ report }: { report: ReportData }) {
                 icon={<TrendingUp className="w-4 h-4" />}
                 label="Engagement"
                 value={`${yt.avgEngagementRate}%`}
-                blurred={!isPaid}
               />
             </div>
 
@@ -313,7 +378,6 @@ export default function ReportPreview({ report }: { report: ReportData }) {
                 icon={<Eye className="w-4 h-4" />}
                 label="Last 30d Views"
                 value={formatNumber(yt.last30DayViews)}
-                blurred={!isPaid}
               />
               <MetricCard
                 icon={<Clock className="w-4 h-4" />}
@@ -332,7 +396,7 @@ export default function ReportPreview({ report }: { report: ReportData }) {
                 </h3>
                 <TrustBadge verdict={ytAudit.verdict} score={ytAudit.trustScore} />
               </div>
-              <div className={`grid grid-cols-2 sm:grid-cols-4 gap-4 ${isPaid ? "" : "blur-metric"}`}>
+              <div className={`grid grid-cols-2 sm:grid-cols-4 gap-4 `}>
                 <MetricCard
                   icon={<IndianRupee className="w-4 h-4" />}
                   label="Est. Rate"
@@ -355,7 +419,7 @@ export default function ReportPreview({ report }: { report: ReportData }) {
                 />
               </div>
               {ytAudit.flags.length > 0 && (
-                <div className={`mt-4 space-y-1.5 ${isPaid ? "" : "blur-metric"}`}>
+                <div className={`mt-4 space-y-1.5 `}>
                   {ytAudit.flags.map((flag, i) => (
                     <p key={i} className="text-[11px] text-muted flex items-center gap-1.5">
                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${flag.type === "danger" ? "bg-danger" : flag.type === "warning" ? "bg-warning" : "bg-success"}`} />
@@ -376,7 +440,7 @@ export default function ReportPreview({ report }: { report: ReportData }) {
               {yt.topVideos.slice(0, 5).map((video, i) => (
                 <div
                   key={video.id}
-                  className={`flex items-center gap-3 ${isPaid || i < 2 ? "" : "blur-metric"}`}
+                  className={`flex items-center gap-3 `}
                 >
                   <VideoThumb src={video.thumbnailUrl} alt={video.title} />
                   <div className="flex-1 min-w-0">
@@ -432,7 +496,6 @@ export default function ReportPreview({ report }: { report: ReportData }) {
                 icon={<UserCheck className="w-4 h-4" />}
                 label="Following"
                 value={formatNumber(ig.followingCount)}
-                blurred={!isPaid}
               />
               <MetricCard
                 icon={<Image className="w-4 h-4" />}
@@ -443,7 +506,6 @@ export default function ReportPreview({ report }: { report: ReportData }) {
                 icon={<TrendingUp className="w-4 h-4" />}
                 label="Engagement"
                 value={`${ig.engagementRate}%`}
-                blurred={!isPaid}
               />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
@@ -474,7 +536,7 @@ export default function ReportPreview({ report }: { report: ReportData }) {
                 </h3>
                 <TrustBadge verdict={igAudit.verdict} score={igAudit.trustScore} />
               </div>
-              <div className={`grid grid-cols-2 sm:grid-cols-4 gap-4 ${isPaid ? "" : "blur-metric"}`}>
+              <div className={`grid grid-cols-2 sm:grid-cols-4 gap-4 `}>
                 <MetricCard
                   icon={<IndianRupee className="w-4 h-4" />}
                   label="Est. Rate"
@@ -497,7 +559,7 @@ export default function ReportPreview({ report }: { report: ReportData }) {
                 />
               </div>
               {igAudit.flags.length > 0 && (
-                <div className={`mt-4 space-y-1.5 ${isPaid ? "" : "blur-metric"}`}>
+                <div className={`mt-4 space-y-1.5 `}>
                   {igAudit.flags.map((flag, i) => (
                     <p key={i} className="text-[11px] text-muted flex items-center gap-1.5">
                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${flag.type === "danger" ? "bg-danger" : flag.type === "warning" ? "bg-warning" : "bg-success"}`} />
@@ -516,10 +578,10 @@ export default function ReportPreview({ report }: { report: ReportData }) {
                 Recent Posts
               </h3>
               <div className="space-y-3">
-                {ig.recentPosts.slice(0, isPaid ? 6 : 3).map((post, i) => (
+                {ig.recentPosts.slice(0, 6).map((post, i) => (
                   <div
                     key={post.id}
-                    className={`bg-background/50 rounded-xl p-3 ${!isPaid && i >= 2 ? "blur-metric" : ""}`}
+                    className={`bg-background/50 rounded-xl p-3 `}
                   >
                     <p className="text-xs text-foreground leading-relaxed line-clamp-2 mb-2">
                       {post.caption || "No caption"}
@@ -573,7 +635,7 @@ export default function ReportPreview({ report }: { report: ReportData }) {
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted mb-4">
                 Top Hashtags
               </h3>
-              <div className={`flex flex-wrap gap-2 ${isPaid ? "" : "blur-metric"}`}>
+              <div className={`flex flex-wrap gap-2 `}>
                 {sortedHashtags.map(([tag, count]) => (
                   <span key={tag} className="text-xs bg-accent/10 text-accent border border-accent/20 px-3 py-1.5 rounded-full flex items-center gap-1.5">
                     <Hash className="w-3 h-3" />
@@ -591,7 +653,7 @@ export default function ReportPreview({ report }: { report: ReportData }) {
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted mb-4">
                 Related Profiles
               </h3>
-              <div className={`grid grid-cols-2 sm:grid-cols-3 gap-3 ${isPaid ? "" : "blur-metric"}`}>
+              <div className={`grid grid-cols-2 sm:grid-cols-3 gap-3 `}>
                 {ig.relatedProfiles.slice(0, 6).map((profile) => (
                   <div key={profile.username} className="bg-background/50 rounded-xl p-3 flex items-center gap-2">
                     <AtSign className="w-3.5 h-3.5 text-muted shrink-0" />
@@ -610,33 +672,6 @@ export default function ReportPreview({ report }: { report: ReportData }) {
         </>
       )}
 
-      {/* Pay CTA */}
-      {!isPaid && (
-        <div className="bg-card rounded-2xl border border-accent/30 p-6 text-center">
-          <Lock className="w-8 h-8 text-accent mx-auto mb-3" />
-          <h3 className="text-lg font-bold mb-1">Unlock Full Report</h3>
-          <p className="text-sm text-muted mb-4">
-            Get the complete verified report with all metrics, detailed
-            engagement benchmarks, and a downloadable PDF.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button className="w-full sm:w-auto bg-accent hover:bg-accent-light text-white px-8 py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2">
-              <Lock className="w-4 h-4" />
-              Pay ₹2,500
-              <span className="text-xs opacity-70 line-through">₹5,000</span>
-            </button>
-            <button className="w-full sm:w-auto border border-border hover:border-muted text-foreground px-6 py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2">
-              <Download className="w-4 h-4" />
-              3 Reports — ₹12,500
-            </button>
-          </div>
-
-          <p className="text-[10px] text-muted mt-3">
-            Launch offer: first report at ₹2,500. Includes PDF + GST invoice.
-          </p>
-        </div>
-      )}
     </section>
   );
 }

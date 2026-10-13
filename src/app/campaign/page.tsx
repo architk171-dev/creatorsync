@@ -39,6 +39,9 @@ import {
   Sparkles,
   Clapperboard,
   Camera,
+  Flame,
+  Grid3X3,
+  Activity,
 } from "lucide-react";
 import { CampaignBrief, CampaignAnalysis, CampaignGoal, CreatorRecommendation } from "@/lib/types";
 import { estimateCreatorPricing, formatPrice } from "@/lib/pricing";
@@ -291,7 +294,7 @@ export default function CampaignPage() {
           <Link href="/" className="flex items-center gap-2">
             <Shield className="w-6 h-6 text-accent" />
             <span className="text-lg font-bold tracking-tight">
-              Creator<span className="text-accent">Sync</span>
+              NoCap<span className="text-accent">Verify</span>
             </span>
           </Link>
           <div className="flex items-center gap-4 text-sm">
@@ -522,6 +525,160 @@ export default function CampaignPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {analysis.aiInsights.clicheApproaches && analysis.aiInsights.clicheApproaches.length > 0 && (
+              <div className="bg-warning/5 border border-warning/20 rounded-2xl p-6 mb-8">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-warning mb-2 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" /> Cliché Approaches We Avoided
+                </h3>
+                <p className="text-[10px] text-muted mb-3">The AI identified these overdone approaches in {analysis.brief.category} and explicitly avoided them when generating ideas above.</p>
+                <div className="flex flex-wrap gap-2">
+                  {analysis.aiInsights.clicheApproaches.map((cliche, i) => (
+                    <span key={i} className="text-[10px] bg-warning/10 text-warning/80 px-2.5 py-1 rounded-full border border-warning/20 line-through decoration-warning/40">
+                      {cliche}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Feature 1: Creative Performance Benchmarks */}
+            {analysis.aiInsights.benchmarks && analysis.aiInsights.benchmarks.topFormats.length > 0 && (
+              <div className="bg-gradient-to-br from-blue-500/5 to-purple-500/5 border border-blue-500/20 rounded-2xl p-6 mb-8">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-blue-400 mb-4 flex items-center gap-2">
+                  <Activity className="w-4 h-4" /> Category Benchmarks — {analysis.brief.category}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="text-[10px] text-muted font-bold uppercase tracking-wider mb-2">Top Content Formats</p>
+                    <div className="space-y-1.5">
+                      {analysis.aiInsights.benchmarks.topFormats.map((f, i) => (
+                        <div key={i} className="flex items-center gap-2 text-sm">
+                          <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-[10px] font-bold shrink-0">{i + 1}</span>
+                          <span className="text-foreground">{f}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted font-bold uppercase tracking-wider mb-2">Engagement by Creator Tier</p>
+                    <div className="space-y-1.5">
+                      {analysis.aiInsights.benchmarks.engagementByTier.map((t, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm">
+                          <span className="text-muted">{t.tier}</span>
+                          <span className="font-bold text-accent">{t.rate}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {analysis.aiInsights.benchmarks.bestPostingCadence && (
+                  <div className="bg-background/50 rounded-xl p-3 mb-2">
+                    <p className="text-[10px] text-muted font-bold uppercase tracking-wider mb-1">Optimal Posting Cadence</p>
+                    <p className="text-sm text-foreground">{analysis.aiInsights.benchmarks.bestPostingCadence}</p>
+                  </div>
+                )}
+                {analysis.aiInsights.benchmarks.platformTip && (
+                  <div className="bg-background/50 rounded-xl p-3">
+                    <p className="text-[10px] text-muted font-bold uppercase tracking-wider mb-1">Platform Insight</p>
+                    <p className="text-sm text-foreground">{analysis.aiInsights.benchmarks.platformTip}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Feature 2: Campaign Performance Predictor */}
+            {analysis.recommendations.length > 0 && (() => {
+              const totalBudget = getBudgetNumber(brief.budgetRange);
+              const perCreator = totalBudget / Math.min(analysis.recommendations.length, 5);
+              const topCreators = analysis.recommendations.slice(0, 5);
+              const aggregateROI = topCreators.map(c =>
+                calculateROI(c.platform as "youtube" | "instagram", c.subscriberCount, c.engagementRate, perCreator)
+              );
+              const totalImpressions = aggregateROI.reduce((s, r) => s + r.estimatedImpressions, 0);
+              const totalEngagements = aggregateROI.reduce((s, r) => s + r.estimatedEngagements, 0);
+              const avgCPM = totalImpressions > 0 ? Math.round((totalBudget / totalImpressions) * 1000) : 0;
+              const avgCostPerEng = totalEngagements > 0 ? Math.round(totalBudget / totalEngagements) : 0;
+              const ratingCounts = { Excellent: 0, Good: 0, Average: 0, "Below Average": 0 };
+              aggregateROI.forEach(r => ratingCounts[r.roiRating]++);
+              const overallRating = ratingCounts.Excellent >= 3 ? "Excellent" : ratingCounts.Good + ratingCounts.Excellent >= 3 ? "Good" : "Average";
+
+              return (
+                <div className="bg-gradient-to-br from-success/5 to-accent/5 border border-success/20 rounded-2xl p-6 mb-8">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-success mb-4 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" /> Predicted Campaign Outcomes
+                  </h3>
+                  <p className="text-[10px] text-muted mb-3">Based on top {topCreators.length} creators · Budget: {formatCurrency(totalBudget)}</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-background/50 rounded-xl p-3">
+                      <p className="text-[9px] text-muted">Total Est. Reach</p>
+                      <p className="text-lg font-bold">{formatNumber(totalImpressions)}</p>
+                    </div>
+                    <div className="bg-background/50 rounded-xl p-3">
+                      <p className="text-[9px] text-muted">Total Est. Engagements</p>
+                      <p className="text-lg font-bold">{formatNumber(totalEngagements)}</p>
+                    </div>
+                    <div className="bg-background/50 rounded-xl p-3">
+                      <p className="text-[9px] text-muted">Blended CPM</p>
+                      <p className="text-lg font-bold">{formatCurrency(avgCPM)}</p>
+                    </div>
+                    <div className="bg-background/50 rounded-xl p-3">
+                      <p className="text-[9px] text-muted">Cost/Engagement</p>
+                      <p className="text-lg font-bold">{formatCurrency(avgCostPerEng)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className="text-[10px] text-muted">Overall ROI Rating:</span>
+                    <span className={`text-sm font-bold ${overallRating === "Excellent" ? "text-success" : overallRating === "Good" ? "text-accent" : "text-warning"}`}>{overallRating}</span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Feature 5: Creator-Brand Fit Heatmap */}
+            {analysis.recommendations.some(c => c.fitDimensions) && (
+              <div className="bg-card rounded-2xl border border-border p-6 mb-8 overflow-x-auto">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-accent mb-4 flex items-center gap-2">
+                  <Grid3X3 className="w-4 h-4" /> Creator-Brand Fit Heatmap
+                </h3>
+                <table className="w-full border-collapse min-w-[600px]">
+                  <thead>
+                    <tr>
+                      <th className="text-left text-[10px] font-bold text-muted p-2 border-b border-border">Creator</th>
+                      <th className="text-center text-[10px] font-bold text-muted p-2 border-b border-border">Audience</th>
+                      <th className="text-center text-[10px] font-bold text-muted p-2 border-b border-border">Engagement</th>
+                      <th className="text-center text-[10px] font-bold text-muted p-2 border-b border-border">Content</th>
+                      <th className="text-center text-[10px] font-bold text-muted p-2 border-b border-border">Safety</th>
+                      <th className="text-center text-[10px] font-bold text-muted p-2 border-b border-border">Value</th>
+                      <th className="text-center text-[10px] font-bold text-muted p-2 border-b border-border">Overall</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analysis.recommendations.filter(c => c.fitDimensions).slice(0, 10).map((c) => {
+                      const d = c.fitDimensions!;
+                      const cellColor = (v: number) =>
+                        v >= 70 ? "bg-success/20 text-success" : v >= 40 ? "bg-warning/20 text-warning" : "bg-danger/20 text-danger";
+                      return (
+                        <tr key={c.handle} className="hover:bg-card/50">
+                          <td className="p-2 border-b border-border/50">
+                            <p className="text-xs font-bold truncate max-w-[120px]">{c.name}</p>
+                            <p className="text-[9px] text-muted">@{c.handle}</p>
+                          </td>
+                          {[d.audienceMatch, d.engagementQuality, d.contentRelevance, d.brandSafety, d.valueForMoney].map((v, i) => (
+                            <td key={i} className="p-2 border-b border-border/50 text-center">
+                              <span className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded ${cellColor(v)}`}>{v}</span>
+                            </td>
+                          ))}
+                          <td className="p-2 border-b border-border/50 text-center">
+                            <span className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded ${cellColor(c.fitScore)}`}>{c.fitScore}</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
 
@@ -882,12 +1039,64 @@ function CreatorCard({ creator, budgetRange, onDeepReport, isComparing, onToggle
           </div>
         </div>
 
+        {creator.performance && (
+          <div className="mb-3 bg-background/30 rounded-lg p-3 border border-border/50">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-accent mb-2">Creator Performance</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {creator.performance.avgViews != null && (
+                <div>
+                  <p className="text-[9px] text-muted">Avg. Views</p>
+                  <p className="text-sm font-bold">{formatNumber(creator.performance.avgViews)}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-[9px] text-muted">Avg. Likes</p>
+                <p className="text-sm font-bold">{formatNumber(creator.performance.avgLikes || 0)}</p>
+              </div>
+              <div>
+                <p className="text-[9px] text-muted">Avg. Comments</p>
+                <p className="text-sm font-bold">{formatNumber(creator.performance.avgComments || 0)}</p>
+              </div>
+              <div>
+                <p className="text-[9px] text-muted">Engagement Rate</p>
+                <p className="text-sm font-bold">{creator.engagementRate}%</p>
+              </div>
+            </div>
+            {creator.performance.postsSampled && (
+              <p className="text-[8px] text-muted mt-1.5">Based on {creator.performance.postsSampled} recent {creator.platform === "youtube" ? "videos" : "posts"}</p>
+            )}
+          </div>
+        )}
+
+        {/* Feature 3: Content Format Scoring */}
+        {creator.formatScores && creator.formatScores.length > 0 && (
+          <div className="mb-3 bg-background/30 rounded-lg p-3 border border-border/50">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-accent mb-2 flex items-center gap-1">
+              <Flame className="w-3 h-3" /> Content Format Scores
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {creator.formatScores.map((fs, i) => (
+                <div key={i} className="bg-background/50 rounded-lg p-2">
+                  <div className="flex items-center gap-1">
+                    <p className="text-[10px] font-semibold">{fs.format}</p>
+                    {i === 0 && <span className="text-[8px] bg-accent/20 text-accent px-1 rounded">Best</span>}
+                  </div>
+                  <p className="text-xs font-bold">{fs.avgEngagement}% eng.</p>
+                  {fs.avgViews != null && <p className="text-[9px] text-muted">{formatNumber(fs.avgViews)} avg views</p>}
+                  <p className="text-[8px] text-muted">{fs.count} {creator.platform === "youtube" ? "videos" : "posts"}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <p className="text-xs text-muted mb-3 leading-relaxed">{creator.fitReason}</p>
 
         <div className="flex items-center justify-between">
           <div className="flex gap-1.5 flex-wrap">
             <span className="text-[9px] bg-accent/10 text-accent px-2 py-0.5 rounded-full">{creator.category}</span>
             <span className="text-[9px] bg-accent/10 text-accent px-2 py-0.5 rounded-full">{pricing.tier} Tier</span>
+            {creator.bestFormat && <span className="text-[9px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full">Best: {creator.bestFormat}</span>}
             {creator.contentStyle && <span className="text-[9px] bg-card border border-border text-muted px-2 py-0.5 rounded-full">{creator.contentStyle}</span>}
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -1007,6 +1216,9 @@ function ComparisonView({ creators, budgetRange, onBack }: {
     { label: "ROI Rating", values: (d) => d.roi.roiRating },
     { label: "Category", values: (d) => d.creator.category },
     { label: "Content Style", values: (d) => d.creator.contentStyle || "—" },
+    { label: "Avg. Views", values: (d) => d.creator.performance?.avgViews != null ? formatNumber(d.creator.performance.avgViews) : "—" },
+    { label: "Avg. Likes", values: (d) => d.creator.performance?.avgLikes != null ? formatNumber(d.creator.performance.avgLikes) : "—" },
+    { label: "Avg. Comments", values: (d) => d.creator.performance?.avgComments != null ? formatNumber(d.creator.performance.avgComments) : "—" },
     { label: "Verified", values: (d) => d.creator.isVerified ? "Yes" : "No" },
   ];
 

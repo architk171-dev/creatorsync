@@ -71,6 +71,45 @@ Important: Use REAL Indian creators who are known to have worked with these bran
     }
 
     const data = JSON.parse(cleaned);
+
+    const YT_KEY = process.env.YOUTUBE_API_KEY;
+    if (YT_KEY && data.results) {
+      for (const result of data.results) {
+        if (!result.mentions) continue;
+        const verified: typeof result.mentions = [];
+        for (const m of result.mentions) {
+          try {
+            if (m.platform === "youtube" && m.handle) {
+              const handle = m.handle.startsWith("@") ? m.handle : `@${m.handle}`;
+              const searchUrl = `https://www.googleapis.com/youtube/v3/search?key=${YT_KEY}&part=snippet&q=${encodeURIComponent(handle)}&type=channel&maxResults=1`;
+              const sRes = await fetch(searchUrl, { cache: "no-store" });
+              if (sRes.ok) {
+                const sData = await sRes.json();
+                const chId = sData.items?.[0]?.snippet?.channelId;
+                if (chId) {
+                  const chUrl = `https://www.googleapis.com/youtube/v3/channels?key=${YT_KEY}&part=statistics&id=${chId}`;
+                  const chRes = await fetch(chUrl, { cache: "no-store" });
+                  if (chRes.ok) {
+                    const chData = await chRes.json();
+                    const stats = chData.items?.[0]?.statistics;
+                    if (stats) {
+                      m.followerCount = parseInt(stats.subscriberCount || "0");
+                      m.estimatedReach = Math.round(m.followerCount * 0.1);
+                      m.verified = true;
+                    }
+                  }
+                }
+              }
+            }
+          } catch {
+            // verification is best-effort
+          }
+          verified.push(m);
+        }
+        result.mentions = verified;
+      }
+    }
+
     return NextResponse.json(data);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to analyze competitors";

@@ -93,15 +93,20 @@ CAMPAIGN BRIEF:
 - Description: ${brief.description}
 ${competitorBlock}
 
-YOUR JOB: Give specific, surprising, actually-executable campaign ideas. Not "create engaging content" — instead "Creator opens video unboxing a competitor's product, uses it for 30 seconds, then switches to ${brief.brandName} and shows the exact difference."
+STEP 1 — ANTI-PATTERN FILTER (do this mentally before generating ideas):
+First, list the 10-15 most common, cliché, overdone influencer campaign approaches in the ${brief.category} category in India. Examples of cliché approaches: unboxing with fake surprise, "a day in my life" with forced product placement, discount code videos, generic "honest review" that's obviously scripted, "morning routine" with product plug.
+These are your BLOCKED approaches. NONE of your creative ideas may use any of these cliché formats. If an idea even slightly resembles a blocked approach, discard it and think of something genuinely different.
+
+STEP 2 — GENERATE:
+YOUR JOB: Give specific, surprising, actually-executable campaign ideas that AVOID every cliché you identified above. Not "create engaging content" — instead "Creator opens video unboxing a competitor's product, uses it for 30 seconds, then switches to ${brief.brandName} and shows the exact difference."
 
 Respond ONLY with valid JSON (no markdown, no code fences):
 {
   "criteria": {
     "subscriberRange": { "min": <number>, "max": <number> },
     "engagementMin": <number between 1-10>,
-    "contentKeywords": [<5-8 search keywords for finding creators in this niche>],
-    "instagramUsernames": [<5-8 real Instagram usernames/handles of popular Indian creators in this niche who would be a good fit — no @ prefix, just the username>],
+    "contentKeywords": [<8-12 search keywords for finding creators in this niche — be specific, include both broad and niche terms>],
+    "instagramUsernames": [<10-15 real Instagram usernames/handles of popular Indian creators in this niche who would be a good fit — no @ prefix, just the username. Include a mix of nano, micro, and mid-tier creators>],
     "audienceMatch": "<one sentence describing ideal audience>",
     "platformFocus": "<which platform is more important and why>",
     "reasoning": "<2-3 sentences on why these criteria>"
@@ -111,15 +116,29 @@ Respond ONLY with valid JSON (no markdown, no code fences):
     "idealCreatorProfile": "<2-3 sentences. Don't say 'tech creator with engaged audience'. Say 'A creator who does comparison/review content, has done at least 2 brand deals in the last 3 months but NOT with ${brief.brandName}'s direct competitors, and whose comment section shows real product questions not just fire emojis'>",
     "budgetAllocation": "<2-3 sentences with actual percentage splits and reasoning. e.g. '60% on 2 mid-tier creators (5-15L subs) for dedicated videos, 30% on 5 nano creators (10-50K) for Instagram Reels creating a wave effect, 10% for boosting the best-performing piece'>",
     "expectedOutcomes": "<2-3 sentences with specific number ranges, not vague promises. e.g. 'With this budget and creator mix, expect 5-8L total views across YouTube, 15K-25K profile visits, and a 2-3x spike in brand search volume within 2 weeks of launch'>",
+    "clicheApproaches": [
+      "<List 5-8 of the most overdone approaches in ${brief.category} influencer campaigns that you are explicitly avoiding>"
+    ],
     "creativeIdeas": [
-      "<Idea 1: A specific, scene-by-scene content concept. Start with the hook, describe the middle, end with the CTA. 2-3 sentences. Must be something this specific brand can do that a generic brand cannot.>",
-      "<Idea 2: A different format/angle entirely. If Idea 1 is a YouTube video, make this an Instagram series or a challenge.>",
-      "<Idea 3: An unconventional idea that breaks the category norm. What would make someone screenshot this and share it?>"
+      "<Idea 1: A specific, scene-by-scene content concept that is NOT a cliché. Start with the hook, describe the middle, end with the CTA. 2-3 sentences. Must be something this specific brand can do that a generic brand cannot. End with: 'Why this works: [reason]'>",
+      "<Idea 2: A different format/angle entirely. If Idea 1 is a YouTube video, make this an Instagram series or a challenge. End with why this avoids the usual pattern.>",
+      "<Idea 3: An unconventional idea that breaks the category norm. What would make someone screenshot this and share it? End with why it's different.>"
     ],
     "antiPatterns": [
-      "<What NOT to do: A specific mistake brands in ${brief.category} commonly make with influencer campaigns, and why it backfires>",
-      "<Another common mistake to avoid>"
-    ]
+      "<What NOT to do: A specific mistake brands in ${brief.category} commonly make with influencer campaigns, and why it backfires. Be concrete — name the exact format/hook that fails.>",
+      "<Another common mistake to avoid — name the cliché and explain what happens when brands do it>"
+    ],
+    "benchmarks": {
+      "topFormats": ["<Top 3-4 content formats that perform best in ${brief.category} on ${brief.platforms.join(" and ")}, ranked by typical engagement. e.g. 'YouTube Shorts (2.3x avg engagement)', 'Instagram Reels (1.8x)'>"],
+      "engagementByTier": [
+        { "tier": "Nano (1K-10K)", "rate": "<typical engagement rate for nano creators in ${brief.category}>" },
+        { "tier": "Micro (10K-100K)", "rate": "<rate>" },
+        { "tier": "Mid (100K-500K)", "rate": "<rate>" },
+        { "tier": "Macro (500K+)", "rate": "<rate>" }
+      ],
+      "bestPostingCadence": "<Optimal posting schedule for ${brief.category} campaigns. e.g. 'Drop teaser Monday, main video Wednesday, recap Reel Friday'>",
+      "platformTip": "<One specific platform insight for ${brief.category}. e.g. 'YouTube Shorts outperform long-form for awareness in tech by 2.3x'>"
+    }
   }
 }`;
 
@@ -133,8 +152,14 @@ Respond ONLY with valid JSON (no markdown, no code fences):
   if (!parsed.insights.creativeIdeas) {
     parsed.insights.creativeIdeas = [];
   }
+  if (!parsed.insights.clicheApproaches) {
+    parsed.insights.clicheApproaches = [];
+  }
   if (!parsed.insights.antiPatterns) {
     parsed.insights.antiPatterns = [];
+  }
+  if (!parsed.insights.benchmarks) {
+    parsed.insights.benchmarks = { topFormats: [], engagementByTier: [], bestPostingCadence: "", platformTip: "" };
   }
 
   return parsed;
@@ -160,6 +185,13 @@ export async function scoreCreatorFit(
     contentStyle: string;
     estimatedReach: number;
     instagramUrl?: string;
+    fitDimensions?: {
+      audienceMatch: number;
+      engagementQuality: number;
+      contentRelevance: number;
+      brandSafety: number;
+      valueForMoney: number;
+    };
   }[]
 > {
   if (!creators.length) return [];
@@ -197,7 +229,14 @@ Respond ONLY with a valid JSON array (no markdown, no code fences):
     "fitReason": "<1-2 direct sentences. Be blunt. 'Great fit because their last 5 videos were gadget reviews and their audience comments about purchase decisions' or 'Poor fit — lifestyle creator whose audience cares about fashion, not finance'>",
     "contentStyle": "<brief description of their content style>",
     "estimatedReach": <estimated total reach for a sponsored post/video>,
-    "instagramUrl": "<their Instagram profile URL if known, e.g. https://instagram.com/username, or null>"
+    "instagramUrl": "<their Instagram profile URL if known, e.g. https://instagram.com/username, or null>",
+    "fitDimensions": {
+      "audienceMatch": <0-100 how well their audience matches target>,
+      "engagementQuality": <0-100 real engagement vs vanity metrics>,
+      "contentRelevance": <0-100 how relevant their content is to the brand>,
+      "brandSafety": <0-100 how brand-safe their content is>,
+      "valueForMoney": <0-100 bang for buck given their rates vs reach>
+    }
   }
 ]`;
 

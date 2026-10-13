@@ -23,11 +23,11 @@ const faqs = [
   },
   {
     q: "Is the Campaign Planner free?",
-    a: "Yes — the Campaign Planner including creator discovery, fit scoring, and deliverable briefs is free to use. Individual deep-dive verified reports (with full engagement analysis, growth trends, and PDF export) are available at ₹2,500 per report.",
+    a: "Yes — everything on NoCap Verify is currently free to use, including the Campaign Planner, creator discovery, fit scoring, deliverable briefs, and individual verified reports with full engagement analysis and growth trends.",
   },
   {
     q: "Can I verify a specific creator without running a campaign?",
-    a: "Absolutely. Use the 'Verify a Creator' form on this page to generate an API-verified report on any YouTube or Instagram creator. You'll get a blurred preview for free and can unlock the full report with payment.",
+    a: "Absolutely. Use the 'Verify a Creator' form on this page to generate an API-verified report on any YouTube or Instagram creator. You'll get the full report with all metrics visible — completely free.",
   },
   {
     q: "What platforms are supported?",

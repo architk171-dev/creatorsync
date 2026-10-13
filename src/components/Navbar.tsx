@@ -37,32 +37,18 @@ export default function Navbar() {
         <a href="/" className="flex items-center gap-2 group">
           <Shield className="w-6 h-6 text-accent group-hover:rotate-12 transition-transform" />
           <span className="text-lg font-bold tracking-tight">
-            Creator<span className="text-accent">Sync</span>
+            NoCap<span className="text-accent">Verify</span>
           </span>
         </a>
 
         <div className="hidden md:flex items-center gap-6 text-sm text-muted">
-          {[
-            { label: "How It Works", id: "how-it-works" },
-            { label: "Sample Report", id: "sample" },
-            { label: "Verify Creator", id: "generate" },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => scrollTo(item.id)}
-              className="hover:text-foreground transition relative group/link"
-            >
-              {item.label}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover/link:w-full" />
-            </button>
-          ))}
-          <a
-            href="/how-we-verify"
+          <button
+            onClick={() => scrollTo("generate")}
             className="hover:text-foreground transition relative group/link"
           >
-            How We Verify
+            Verify Creator
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover/link:w-full" />
-          </a>
+          </button>
           <a
             href="/competitor"
             className="hover:text-foreground transition relative group/link"
@@ -70,13 +56,13 @@ export default function Navbar() {
             Competitor Intel
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover/link:w-full" />
           </a>
-          <button
-            onClick={() => scrollTo("pricing")}
+          <a
+            href="/how-we-verify"
             className="hover:text-foreground transition relative group/link"
           >
-            Pricing
+            How We Verify
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover/link:w-full" />
-          </button>
+          </a>
           <a
             href="/campaign"
             className="bg-accent hover:bg-accent-light text-white px-4 py-2 rounded-full text-sm font-medium transition hover:scale-105 hover:shadow-lg hover:shadow-accent/20"
@@ -102,39 +88,19 @@ export default function Navbar() {
         }}
       >
         <div className="bg-card border-t border-border px-4 py-4 flex flex-col gap-4">
-          {[
-            { label: "How It Works", action: () => scrollTo("how-it-works") },
-            { label: "Sample Report", action: () => scrollTo("sample") },
-            { label: "Verify Creator", action: () => scrollTo("generate") },
-            { label: "Pricing", action: () => scrollTo("pricing") },
-          ].map((item) => (
-            <button
-              key={item.label}
-              onClick={item.action}
-              className="text-sm text-muted hover:text-foreground text-left transition"
-            >
-              {item.label}
-            </button>
-          ))}
-          <a
-            href="/how-we-verify"
-            className="text-sm text-muted hover:text-foreground"
-            onClick={() => setOpen(false)}
+          <button
+            onClick={() => scrollTo("generate")}
+            className="text-sm text-muted hover:text-foreground text-left transition"
           >
-            How We Verify
-          </a>
-          <a
-            href="/competitor"
-            className="text-sm text-muted hover:text-foreground"
-            onClick={() => setOpen(false)}
-          >
+            Verify Creator
+          </button>
+          <a href="/competitor" className="text-sm text-muted hover:text-foreground" onClick={() => setOpen(false)}>
             Competitor Intel
           </a>
-          <a
-            href="/campaign"
-            className="bg-accent text-white px-4 py-2 rounded-full text-sm font-medium text-center"
-            onClick={() => setOpen(false)}
-          >
+          <a href="/how-we-verify" className="text-sm text-muted hover:text-foreground" onClick={() => setOpen(false)}>
+            How We Verify
+          </a>
+          <a href="/campaign" className="bg-accent text-white px-4 py-2 rounded-full text-sm font-medium text-center" onClick={() => setOpen(false)}>
             Plan Campaign
           </a>
         </div>

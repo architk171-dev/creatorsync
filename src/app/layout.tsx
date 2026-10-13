@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CreatorSync — Verified Creator Reports",
+  title: "NoCap Verify — Stop the Cap. Start the Campaign.",
   description:
-    "API-verified creator due diligence reports for brands, agencies & investors. Real metrics, not screenshots.",
+    "API-verified creator due diligence reports for brands, agencies & investors. Real metrics, not screenshots. No cap.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

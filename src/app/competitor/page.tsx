@@ -12,6 +12,8 @@ import {
   ArrowLeft,
   AlertTriangle,
   BarChart3,
+  BadgeCheck,
+  Target,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -29,6 +31,7 @@ interface CreatorMention {
   contentType: string;
   estimatedReach: number;
   context: string;
+  verified?: boolean;
 }
 
 function formatNumber(n: number): string {
@@ -82,7 +85,7 @@ export default function CompetitorPage() {
           <Link href="/" className="flex items-center gap-2">
             <Shield className="w-6 h-6 text-accent" />
             <span className="text-lg font-bold tracking-tight">
-              Creator<span className="text-accent">Sync</span>
+              NoCap<span className="text-accent">Verify</span>
             </span>
           </Link>
           <div className="flex items-center gap-4 text-sm">
@@ -194,6 +197,11 @@ export default function CompetitorPage() {
                           <div className="flex gap-1.5 mt-2">
                             <span className="text-[9px] bg-accent/10 text-accent px-2 py-0.5 rounded-full">{mention.contentType}</span>
                             <span className="text-[9px] bg-card border border-border text-muted px-2 py-0.5 rounded-full capitalize">{mention.platform}</span>
+                            {mention.verified && (
+                              <span className="text-[9px] bg-success/10 text-success px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                                <BadgeCheck className="w-3 h-3" /> API Verified
+                              </span>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -204,6 +212,16 @@ export default function CompetitorPage() {
                       <p className="text-sm text-muted">No creator campaigns found for this brand.</p>
                     </div>
                   )}
+
+                  <div className="mt-4">
+                    <Link
+                      href={`/campaign?competitor=${encodeURIComponent(result.brandName)}`}
+                      className="inline-flex items-center gap-2 bg-accent/10 hover:bg-accent/20 border border-accent/30 text-accent px-4 py-2.5 rounded-xl text-sm font-semibold transition"
+                    >
+                      <Target className="w-4 h-4" />
+                      Benchmark Against Your Campaign
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>

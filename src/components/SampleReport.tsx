@@ -25,7 +25,7 @@ export default function SampleReport() {
             Sample Verified Report
           </h2>
           <p className="text-muted text-sm text-center mb-12 max-w-md mx-auto">
-            Here&apos;s what a real CreatorSync report looks like — this one was
+            Here&apos;s what a real NoCap Verify report looks like — this one was
             generated for a public tech channel.
           </p>
         </ScrollReveal>
@@ -171,7 +171,7 @@ export default function SampleReport() {
                 className="inline-flex items-center gap-2 bg-accent hover:bg-accent-light text-white px-8 py-3 rounded-full font-semibold transition cursor-pointer hover:scale-105"
               >
                 <Zap className="w-4 h-4" />
-                Generate Your Report — ₹2,500
+                Generate Your Report — Free
               </button>
             </div>
           </ScrollReveal>

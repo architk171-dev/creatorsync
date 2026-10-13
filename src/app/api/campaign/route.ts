@@ -73,7 +73,7 @@ export async function POST(req: Request) {
 
     if (brief.platforms.includes("youtube")) {
       creatorPromises.push(
-        searchYouTubeCreators(criteria.contentKeywords, 8).catch((e) => {
+        searchYouTubeCreators(criteria.contentKeywords, 15).catch((e) => {
           console.error("YouTube search failed:", e);
           return [];
         })
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
     if (brief.platforms.includes("instagram")) {
       const igUsernames = criteria.instagramUsernames || [];
       creatorPromises.push(
-        searchInstagramCreators(igUsernames, 5).catch((e) => {
+        searchInstagramCreators(igUsernames, 8, criteria.contentKeywords || []).catch((e) => {
           console.error("Instagram search failed:", e);
           return [];
         })
@@ -111,14 +111,15 @@ export async function POST(req: Request) {
         const score = scores.find((s) => s.handle === creator.handle);
         return {
           ...creator,
-          fitScore: score?.fitScore || Math.round(Math.random() * 30 + 40),
+          fitScore: score?.fitScore || 0,
           fitReason:
             score?.fitReason ||
-            "Relevant creator in the target category.",
+            "Could not score — insufficient data for this creator.",
           contentStyle: score?.contentStyle || creator.contentStyle || "Mixed",
           estimatedReach:
             score?.estimatedReach || creator.estimatedReach,
           instagramUrl: score?.instagramUrl || undefined,
+          fitDimensions: score?.fitDimensions || undefined,
         };
       });
 
@@ -129,7 +130,7 @@ export async function POST(req: Request) {
       id: randomUUID(),
       brief,
       criteria,
-      recommendations: allCreators.slice(0, 12),
+      recommendations: allCreators.slice(0, 15),
       aiInsights: insights,
       createdAt: new Date().toISOString(),
     };

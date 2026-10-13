@@ -12,7 +12,7 @@ export default function HowWeVerify() {
             <Shield className="w-12 h-12 text-accent mx-auto mb-4" />
             <h1 className="text-3xl font-bold mb-3">How We Verify</h1>
             <p className="text-muted text-sm">
-              Every number in a CreatorSync report is pulled directly from
+              Every number in a NoCap Verify report is pulled directly from
               platform APIs — not screenshots, not self-reported data, not
               third-party estimates.
             </p>

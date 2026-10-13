@@ -100,6 +100,30 @@ export interface CreatorRecommendation {
   postCount?: number;
   topHashtags?: string[];
   instagramUrl?: string;
+  performance?: {
+    avgViews?: number;
+    avgLikes?: number;
+    avgComments?: number;
+    totalViews?: number;
+    totalLikes?: number;
+    totalComments?: number;
+    postsSampled?: number;
+  };
+  formatScores?: {
+    format: string;
+    avgViews?: number;
+    avgLikes?: number;
+    avgEngagement: number;
+    count: number;
+  }[];
+  bestFormat?: string;
+  fitDimensions?: {
+    audienceMatch: number;
+    engagementQuality: number;
+    contentRelevance: number;
+    brandSafety: number;
+    valueForMoney: number;
+  };
 }
 
 export interface CampaignAnalysis {
@@ -113,7 +137,14 @@ export interface CampaignAnalysis {
     budgetAllocation: string;
     expectedOutcomes: string;
     creativeIdeas?: string[];
+    clicheApproaches?: string[];
     antiPatterns?: string[];
+    benchmarks?: {
+      topFormats: string[];
+      engagementByTier: { tier: string; rate: string }[];
+      bestPostingCadence: string;
+      platformTip: string;
+    };
   };
   createdAt: string;
 }

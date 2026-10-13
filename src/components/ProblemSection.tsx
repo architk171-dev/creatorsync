@@ -59,7 +59,7 @@ export default function ProblemSection() {
                 <span className="text-accent">trust enough to pay for</span>
               </h3>
               <p className="text-sm text-muted leading-relaxed mb-4">
-                CreatorSync pulls every metric directly from the platform API —
+                NoCap Verify pulls every metric directly from the platform API —
                 not from screenshots, not from the creator, not from third-party
                 estimates.
               </p>

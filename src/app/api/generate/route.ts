@@ -8,10 +8,7 @@ import {
 } from "@/lib/youtube";
 import { getInstagramProfile } from "@/lib/instagram";
 import { generateVerdict } from "@/lib/verdict";
-import { ReportData } from "@/lib/types";
-
-const reportCache = new Map<string, { data: ReportData; timestamp: number }>();
-const CACHE_TTL = 24 * 60 * 60 * 1000;
+import type { ReportData } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,19 +29,6 @@ export async function POST(request: NextRequest) {
         { error: "Email is required" },
         { status: 400 }
       );
-    }
-
-    const cacheKey = `${youtubeHandle || ""}_${instagramHandle || ""}`;
-    const cached = reportCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      const report = {
-        ...cached.data,
-        id: randomUUID(),
-        createdAt: new Date().toISOString(),
-        buyerEmail: email,
-        status: "preview" as const,
-      };
-      return NextResponse.json(report);
     }
 
     const reportId = randomUUID();
@@ -147,8 +131,6 @@ export async function POST(request: NextRequest) {
         console.warn("Instagram fetch failed (YouTube present, continuing):", igMessage);
       }
     }
-
-    reportCache.set(cacheKey, { data: report, timestamp: Date.now() });
 
     return NextResponse.json(report);
   } catch (err) {
