@@ -55,7 +55,7 @@ function RotatingWord() {
   };
 
   return (
-    <span className="text-accent inline-block min-w-[180px] md:min-w-[240px] text-left" style={style}>
+    <span className="text-accent inline-block" style={style}>
       {ROTATING_WORDS[index]}
     </span>
   );
@@ -145,7 +145,7 @@ export default function HeroSection() {
 
   return (
     <section
-      className="gradient-hero pt-28 pb-20 px-4 relative overflow-hidden"
+      className="gradient-hero pt-28 pb-10 px-4 relative overflow-hidden"
       onMouseMove={handleMouseMove}
     >
       <div
@@ -278,7 +278,7 @@ export default function HeroSection() {
           ))}
         </div>
 
-        <div className="mt-12 flex justify-center animate-bounce">
+        <div className="mt-6 flex justify-center animate-bounce">
           <button
             onClick={() => {
               const el = document.getElementById("how-it-works");

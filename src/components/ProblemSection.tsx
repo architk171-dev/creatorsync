@@ -5,7 +5,7 @@ import ScrollReveal from "./ScrollReveal";
 
 export default function ProblemSection() {
   return (
-    <section className="py-20 px-4 border-t border-border">
+    <section className="pt-12 pb-20 px-4 border-t border-border">
       <div className="max-w-4xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <ScrollReveal direction="left">
