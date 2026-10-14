@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Shield,
   Target,
@@ -52,6 +52,8 @@ import Link from "next/link";
 const PLATFORM_GRADIENTS: Record<string, string> = {
   youtube: "from-red-500/80 to-red-700/80",
   instagram: "from-pink-500/80 to-purple-600/80",
+  twitter: "from-sky-400/80 to-sky-600/80",
+  linkedin: "from-blue-500/80 to-blue-700/80",
 };
 
 function CreatorAvatar({ src, name, platform, size = "md" }: { src?: string; name: string; platform: string; size?: "sm" | "md" }) {
@@ -169,6 +171,25 @@ export default function CampaignPage() {
     competitorBrands: [],
   });
 
+  // Persist state to sessionStorage
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("campaign-state");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.brief) setBrief(parsed.brief);
+        if (parsed.step) setStep(parsed.step);
+        if (parsed.analysis) setAnalysis(parsed.analysis);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("campaign-state", JSON.stringify({ brief, step, analysis }));
+    } catch {}
+  }, [brief, step, analysis]);
+
   function updateBrief(updates: Partial<CampaignBrief>) {
     setBrief((prev) => ({ ...prev, ...updates }));
   }
@@ -186,7 +207,7 @@ export default function CampaignPage() {
     });
   }
 
-  function togglePlatform(p: "youtube" | "instagram") {
+  function togglePlatform(p: "youtube" | "instagram" | "twitter" | "linkedin") {
     setBrief((prev) => {
       const platforms = prev.platforms.includes(p)
         ? prev.platforms.filter((x) => x !== p)
@@ -390,10 +411,10 @@ export default function CampaignPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Target Platforms <span className="text-accent">*</span></label>
-                <div className="flex gap-3">
-                  {(["youtube", "instagram"] as const).map((p) => (
-                    <button key={p} onClick={() => togglePlatform(p)} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border font-medium transition ${brief.platforms.includes(p) ? "bg-accent/10 border-accent text-accent" : "bg-card border-border text-muted hover:border-accent/50"}`}>
-                      {p === "youtube" ? "▶ YouTube" : "📷 Instagram"}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {(["youtube", "instagram", "twitter", "linkedin"] as const).map((p) => (
+                    <button key={p} onClick={() => togglePlatform(p)} className={`flex items-center justify-center gap-2 py-3 rounded-xl border font-medium transition text-sm ${brief.platforms.includes(p) ? "bg-accent/10 border-accent text-accent" : "bg-card border-border text-muted hover:border-accent/50"}`}>
+                      {p === "youtube" ? "▶ YouTube" : p === "instagram" ? "📷 Instagram" : p === "twitter" ? "𝕏 Twitter" : "💼 LinkedIn"}
                     </button>
                   ))}
                 </div>
@@ -595,7 +616,7 @@ export default function CampaignPage() {
               const perCreator = totalBudget / Math.min(analysis.recommendations.length, 5);
               const topCreators = analysis.recommendations.slice(0, 5);
               const aggregateROI = topCreators.map(c =>
-                calculateROI(c.platform as "youtube" | "instagram", c.subscriberCount, c.engagementRate, perCreator)
+                calculateROI(c.platform as "youtube" | "instagram" | "twitter" | "linkedin", c.subscriberCount, c.engagementRate, perCreator)
               );
               const totalImpressions = aggregateROI.reduce((s, r) => s + r.estimatedImpressions, 0);
               const totalEngagements = aggregateROI.reduce((s, r) => s + r.estimatedEngagements, 0);
@@ -950,14 +971,14 @@ function CreatorCard({ creator, budgetRange, onDeepReport, isComparing, onToggle
     : "text-danger border-danger/30 bg-danger/10";
 
   const pricing = estimateCreatorPricing(
-    creator.platform as "youtube" | "instagram",
+    creator.platform as "youtube" | "instagram" | "twitter" | "linkedin",
     creator.subscriberCount,
     creator.engagementRate,
     creator.category
   );
 
   const audit = auditCreator(
-    creator.platform as "youtube" | "instagram",
+    creator.platform as "youtube" | "instagram" | "twitter" | "linkedin",
     creator.subscriberCount,
     0,
     creator.engagementRate,
@@ -968,7 +989,7 @@ function CreatorCard({ creator, budgetRange, onDeepReport, isComparing, onToggle
   const totalBudget = getBudgetNumber(budgetRange);
   const perCreatorBudget = totalBudget / 5;
   const roi = calculateROI(
-    creator.platform as "youtube" | "instagram",
+    creator.platform as "youtube" | "instagram" | "twitter" | "linkedin",
     creator.subscriberCount,
     creator.engagementRate,
     perCreatorBudget
@@ -1197,9 +1218,9 @@ function ComparisonView({ creators, budgetRange, onBack }: {
 
   const data = creators.map((c) => ({
     creator: c,
-    pricing: estimateCreatorPricing(c.platform as "youtube" | "instagram", c.subscriberCount, c.engagementRate, c.category),
-    audit: auditCreator(c.platform as "youtube" | "instagram", c.subscriberCount, 0, c.engagementRate, c.postCount || 0, c.isVerified || false),
-    roi: calculateROI(c.platform as "youtube" | "instagram", c.subscriberCount, c.engagementRate, perCreator),
+    pricing: estimateCreatorPricing(c.platform as "youtube" | "instagram" | "twitter" | "linkedin", c.subscriberCount, c.engagementRate, c.category),
+    audit: auditCreator(c.platform as "youtube" | "instagram" | "twitter" | "linkedin", c.subscriberCount, 0, c.engagementRate, c.postCount || 0, c.isVerified || false),
+    roi: calculateROI(c.platform as "youtube" | "instagram" | "twitter" | "linkedin", c.subscriberCount, c.engagementRate, perCreator),
   }));
 
   const rows: { label: string; values: (d: typeof data[0]) => string }[] = [

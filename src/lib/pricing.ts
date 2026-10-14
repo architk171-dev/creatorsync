@@ -1,5 +1,5 @@
 export interface PricingEstimate {
-  platform: "youtube" | "instagram";
+  platform: "youtube" | "instagram" | "twitter" | "linkedin";
   tier: string;
   rates: { type: string; min: number; max: number }[];
   premiumFactors: string[];
@@ -126,6 +126,122 @@ const YT_TIERS: {
   },
 ];
 
+const TW_TIERS: {
+  name: string;
+  min: number;
+  max: number;
+  rates: { type: string; min: number; max: number }[];
+}[] = [
+  {
+    name: "Nano",
+    min: 1_000,
+    max: 10_000,
+    rates: [
+      { type: "Sponsored Tweet", min: 1_000, max: 3_000 },
+      { type: "Thread (3-5 tweets)", min: 2_000, max: 5_000 },
+      { type: "Video Tweet", min: 2_000, max: 6_000 },
+    ],
+  },
+  {
+    name: "Micro",
+    min: 10_000,
+    max: 50_000,
+    rates: [
+      { type: "Sponsored Tweet", min: 3_000, max: 10_000 },
+      { type: "Thread (3-5 tweets)", min: 5_000, max: 15_000 },
+      { type: "Video Tweet", min: 6_000, max: 20_000 },
+    ],
+  },
+  {
+    name: "Mid-Tier",
+    min: 50_000,
+    max: 200_000,
+    rates: [
+      { type: "Sponsored Tweet", min: 10_000, max: 30_000 },
+      { type: "Thread (3-5 tweets)", min: 15_000, max: 50_000 },
+      { type: "Video Tweet", min: 20_000, max: 60_000 },
+    ],
+  },
+  {
+    name: "Macro",
+    min: 200_000,
+    max: 1_000_000,
+    rates: [
+      { type: "Sponsored Tweet", min: 30_000, max: 100_000 },
+      { type: "Thread (3-5 tweets)", min: 50_000, max: 150_000 },
+      { type: "Video Tweet", min: 60_000, max: 200_000 },
+    ],
+  },
+  {
+    name: "Mega",
+    min: 1_000_000,
+    max: Infinity,
+    rates: [
+      { type: "Sponsored Tweet", min: 100_000, max: 500_000 },
+      { type: "Thread (3-5 tweets)", min: 150_000, max: 700_000 },
+      { type: "Video Tweet", min: 200_000, max: 1_000_000 },
+    ],
+  },
+];
+
+const LI_TIERS: {
+  name: string;
+  min: number;
+  max: number;
+  rates: { type: string; min: number; max: number }[];
+}[] = [
+  {
+    name: "Nano",
+    min: 1_000,
+    max: 10_000,
+    rates: [
+      { type: "Sponsored Post", min: 2_000, max: 5_000 },
+      { type: "Article / Newsletter", min: 3_000, max: 8_000 },
+      { type: "Carousel Post", min: 2_500, max: 6_000 },
+    ],
+  },
+  {
+    name: "Micro",
+    min: 10_000,
+    max: 50_000,
+    rates: [
+      { type: "Sponsored Post", min: 5_000, max: 15_000 },
+      { type: "Article / Newsletter", min: 8_000, max: 25_000 },
+      { type: "Carousel Post", min: 6_000, max: 18_000 },
+    ],
+  },
+  {
+    name: "Mid-Tier",
+    min: 50_000,
+    max: 200_000,
+    rates: [
+      { type: "Sponsored Post", min: 15_000, max: 50_000 },
+      { type: "Article / Newsletter", min: 25_000, max: 80_000 },
+      { type: "Carousel Post", min: 18_000, max: 55_000 },
+    ],
+  },
+  {
+    name: "Macro",
+    min: 200_000,
+    max: 1_000_000,
+    rates: [
+      { type: "Sponsored Post", min: 50_000, max: 200_000 },
+      { type: "Article / Newsletter", min: 80_000, max: 300_000 },
+      { type: "Carousel Post", min: 55_000, max: 200_000 },
+    ],
+  },
+  {
+    name: "Mega",
+    min: 1_000_000,
+    max: Infinity,
+    rates: [
+      { type: "Sponsored Post", min: 200_000, max: 800_000 },
+      { type: "Article / Newsletter", min: 300_000, max: 1_200_000 },
+      { type: "Carousel Post", min: 200_000, max: 800_000 },
+    ],
+  },
+];
+
 const PREMIUM_CATEGORIES = [
   "Tech",
   "Finance",
@@ -135,12 +251,13 @@ const PREMIUM_CATEGORIES = [
 ];
 
 export function estimateCreatorPricing(
-  platform: "youtube" | "instagram",
+  platform: "youtube" | "instagram" | "twitter" | "linkedin",
   followers: number,
   engagementRate: number,
   category: string
 ): PricingEstimate {
-  const tiers = platform === "instagram" ? IG_TIERS : YT_TIERS;
+  const tierMap = { instagram: IG_TIERS, youtube: YT_TIERS, twitter: TW_TIERS, linkedin: LI_TIERS };
+  const tiers = tierMap[platform] || YT_TIERS;
   const tier = tiers.find((t) => followers >= t.min && followers < t.max) || tiers[tiers.length - 1];
 
   const premiumFactors: string[] = [];

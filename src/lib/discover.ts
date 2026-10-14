@@ -1,5 +1,7 @@
-import { getInstagramProfile } from "./instagram";
+import { getInstagramProfile, getInstagramProfiles } from "./instagram";
 import { getRecentVideos } from "./youtube";
+import { getTwitterProfiles } from "./twitter";
+import { getLinkedInProfiles } from "./linkedin";
 import { CreatorRecommendation } from "./types";
 
 const API_KEY = process.env.YOUTUBE_API_KEY;
@@ -13,9 +15,7 @@ export async function searchYouTubeCreators(
   const allChannelIds = new Set<string>();
   const recommendations: CreatorRecommendation[] = [];
 
-  for (const query of queries) {
-    if (allChannelIds.size >= maxResults) break;
-
+  const searchPromises = queries.map(async (query) => {
     const url = new URL(`${YT_BASE}/search`);
     url.searchParams.set("key", API_KEY!);
     url.searchParams.set("part", "snippet");
@@ -25,14 +25,23 @@ export async function searchYouTubeCreators(
     url.searchParams.set("order", "relevance");
     url.searchParams.set("regionCode", "IN");
 
-    const res = await fetch(url.toString(), { cache: "no-store" });
-    if (!res.ok) continue;
-    const data = await res.json();
-    if (!data.items?.length) continue;
-
-    for (const item of data.items) {
-      allChannelIds.add(item.snippet.channelId);
+    try {
+      const res = await fetch(url.toString(), { cache: "no-store" });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        console.error(`YT search failed for "${query}": ${res.status} ${errText.slice(0, 100)}`);
+        return [];
+      }
+      const data = await res.json();
+      return (data.items || []).map((item: { snippet: { channelId: string } }) => item.snippet.channelId);
+    } catch {
+      return [];
     }
+  });
+
+  const searchResults = await Promise.all(searchPromises);
+  for (const ids of searchResults) {
+    for (const id of ids) allChannelIds.add(id);
   }
 
   if (allChannelIds.size === 0) return [];
@@ -134,103 +143,165 @@ export async function searchInstagramCreators(
   maxResults = 5,
   relevanceKeywords: string[] = []
 ): Promise<CreatorRecommendation[]> {
-  const results: CreatorRecommendation[] = [];
   const handles = usernames.slice(0, maxResults + 5);
   const keywords = relevanceKeywords.map((k) => k.toLowerCase());
 
-  for (const handle of handles) {
+  const profiles = await getInstagramProfiles(handles);
+  const results: CreatorRecommendation[] = [];
+
+  for (const profile of profiles) {
     if (results.length >= maxResults) break;
-    try {
-      const profile = await getInstagramProfile(handle);
-      if (profile.followerCount < 10000 || (profile.postCount || 0) < 10 || profile.engagementRate < 1.0) continue;
+    if (profile.followerCount < 100) continue;
 
-      if (keywords.length > 0) {
-        const bioText = `${profile.biography || ""} ${profile.fullName || ""} ${profile.businessCategoryName || ""}`.toLowerCase();
-        const postText = (profile.recentPosts || []).map((p: { caption?: string }) => p.caption || "").join(" ").toLowerCase();
-        const allText = `${bioText} ${postText}`;
-        const matchCount = keywords.filter((kw) => allText.includes(kw)).length;
-        if (matchCount === 0) continue;
-      }
+    // Keyword matching is used for scoring, not filtering — Gemini already picked relevant handles
 
-      {
-        const posts = profile.recentPosts || [];
-        const contentStyle =
-          posts.length > 0
-            ? posts.filter((p) => p.type === "Reel" || p.type === "Video").length > posts.length / 2
-              ? "Video-heavy"
-              : "Mixed content"
-            : "Unknown";
+    const posts = profile.recentPosts || [];
+    const contentStyle =
+      posts.length > 0
+        ? posts.filter((p) => p.type === "Reel" || p.type === "Video").length > posts.length / 2
+          ? "Video-heavy"
+          : "Mixed content"
+        : "Unknown";
 
-        const allHashtags = posts.flatMap((p) => p.hashtags || []);
-        const hashtagCounts = new Map<string, number>();
-        for (const tag of allHashtags) {
-          hashtagCounts.set(tag, (hashtagCounts.get(tag) || 0) + 1);
-        }
-        const topHashtags = [...hashtagCounts.entries()]
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5)
-          .map(([tag]) => tag);
-
-        let performance: CreatorRecommendation["performance"];
-        let formatScores: CreatorRecommendation["formatScores"];
-        let bestFormat: string | undefined;
-        if (posts.length > 0) {
-          const totalLikes = posts.reduce((s, p) => s + (p.likeCount || 0), 0);
-          const totalComments = posts.reduce((s, p) => s + (p.commentCount || 0), 0);
-          performance = {
-            avgLikes: Math.round(totalLikes / posts.length),
-            avgComments: Math.round(totalComments / posts.length),
-            totalLikes,
-            totalComments,
-            postsSampled: posts.length,
-          };
-
-          const fmtGroups: Record<string, { likes: number; comments: number; count: number }> = {};
-          for (const p of posts) {
-            const fmt = p.type || "Image";
-            if (!fmtGroups[fmt]) fmtGroups[fmt] = { likes: 0, comments: 0, count: 0 };
-            fmtGroups[fmt].likes += p.likeCount || 0;
-            fmtGroups[fmt].comments += p.commentCount || 0;
-            fmtGroups[fmt].count++;
-          }
-          formatScores = Object.entries(fmtGroups).map(([format, g]) => ({
-            format,
-            avgLikes: Math.round(g.likes / g.count),
-            avgEngagement: profile.followerCount > 0
-              ? Math.round(((g.likes / g.count + g.comments / g.count) / profile.followerCount) * 10000) / 100
-              : 0,
-            count: g.count,
-          }));
-          formatScores.sort((a, b) => b.avgEngagement - a.avgEngagement);
-          bestFormat = formatScores[0]?.format;
-        }
-
-        results.push({
-          platform: "instagram",
-          handle: profile.username,
-          name: profile.fullName,
-          thumbnailUrl: profile.profilePicUrlHD || profile.profilePicUrl,
-          subscriberCount: profile.followerCount,
-          engagementRate: profile.engagementRate,
-          category: extractCategory(profile.biography, ""),
-          fitScore: 0,
-          fitReason: profile.biography?.slice(0, 200) || "",
-          estimatedReach: Math.round(profile.followerCount * 0.05),
-          contentStyle,
-          isVerified: profile.isVerified,
-          isBusinessAccount: profile.isBusinessAccount,
-          businessCategory: profile.businessCategoryName || undefined,
-          externalUrl: profile.externalUrl || undefined,
-          postCount: profile.postCount,
-          topHashtags,
-          performance,
-          formatScores,
-          bestFormat,
-        });
-      }
-    } catch {
-      continue;
+    const allHashtags = posts.flatMap((p) => p.hashtags || []);
+    const hashtagCounts = new Map<string, number>();
+    for (const tag of allHashtags) {
+      hashtagCounts.set(tag, (hashtagCounts.get(tag) || 0) + 1);
     }
+    const topHashtags = [...hashtagCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([tag]) => tag);
+
+    let performance: CreatorRecommendation["performance"];
+    let formatScores: CreatorRecommendation["formatScores"];
+    let bestFormat: string | undefined;
+    if (posts.length > 0) {
+      const totalLikes = posts.reduce((s, p) => s + (p.likeCount || 0), 0);
+      const totalComments = posts.reduce((s, p) => s + (p.commentCount || 0), 0);
+      performance = {
+        avgLikes: Math.round(totalLikes / posts.length),
+        avgComments: Math.round(totalComments / posts.length),
+        totalLikes,
+        totalComments,
+        postsSampled: posts.length,
+      };
+
+      const fmtGroups: Record<string, { likes: number; comments: number; count: number }> = {};
+      for (const p of posts) {
+        const fmt = p.type || "Image";
+        if (!fmtGroups[fmt]) fmtGroups[fmt] = { likes: 0, comments: 0, count: 0 };
+        fmtGroups[fmt].likes += p.likeCount || 0;
+        fmtGroups[fmt].comments += p.commentCount || 0;
+        fmtGroups[fmt].count++;
+      }
+      formatScores = Object.entries(fmtGroups).map(([format, g]) => ({
+        format,
+        avgLikes: Math.round(g.likes / g.count),
+        avgEngagement: profile.followerCount > 0
+          ? Math.round(((g.likes / g.count + g.comments / g.count) / profile.followerCount) * 10000) / 100
+          : 0,
+        count: g.count,
+      }));
+      formatScores.sort((a, b) => b.avgEngagement - a.avgEngagement);
+      bestFormat = formatScores[0]?.format;
+    }
+
+    results.push({
+      platform: "instagram",
+      handle: profile.username,
+      name: profile.fullName,
+      thumbnailUrl: profile.profilePicUrlHD || profile.profilePicUrl,
+      subscriberCount: profile.followerCount,
+      engagementRate: profile.engagementRate,
+      category: extractCategory(profile.biography, ""),
+      fitScore: 0,
+      fitReason: profile.biography?.slice(0, 200) || "",
+      estimatedReach: Math.round(profile.followerCount * 0.05),
+      contentStyle,
+      isVerified: profile.isVerified,
+      isBusinessAccount: profile.isBusinessAccount,
+      businessCategory: profile.businessCategoryName || undefined,
+      externalUrl: profile.externalUrl || undefined,
+      postCount: profile.postCount,
+      topHashtags,
+      performance,
+      formatScores,
+      bestFormat,
+    });
+  }
+
+  return results;
+}
+
+export async function searchTwitterCreators(
+  handles: string[],
+  maxResults = 5
+): Promise<CreatorRecommendation[]> {
+  const profiles = await getTwitterProfiles(handles.slice(0, maxResults + 3));
+  const results: CreatorRecommendation[] = [];
+
+  for (const p of profiles) {
+    if (results.length >= maxResults) break;
+    if (p.followerCount < 100) continue;
+
+    const ageDays = p.createdAt
+      ? Math.floor((Date.now() - new Date(p.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+      : 0;
+    const tweetsPerDay = ageDays > 0 ? p.tweetCount / ageDays : 0;
+    const engRate = p.followerCount > 0
+      ? Math.round((tweetsPerDay * 50) / Math.log10(p.followerCount + 1) * 100) / 100
+      : 0;
+
+    results.push({
+      platform: "twitter",
+      handle: p.username,
+      name: p.name,
+      thumbnailUrl: p.profileImageUrl || "",
+      subscriberCount: p.followerCount,
+      engagementRate: Math.min(engRate, 10),
+      category: extractCategory(p.bio || "", p.name),
+      fitScore: 0,
+      fitReason: p.bio?.slice(0, 200) || "",
+      estimatedReach: Math.round(p.followerCount * 0.08),
+      contentStyle: tweetsPerDay >= 5 ? "Very Active" : tweetsPerDay >= 1 ? "Active" : "Moderate",
+      isVerified: p.isVerified,
+      postCount: p.tweetCount,
+    });
+  }
+
+  return results;
+}
+
+export async function searchLinkedInCreators(
+  handles: string[],
+  maxResults = 5
+): Promise<CreatorRecommendation[]> {
+  const profiles = await getLinkedInProfiles(handles.slice(0, maxResults + 3));
+  const results: CreatorRecommendation[] = [];
+
+  for (const p of profiles) {
+    if (results.length >= maxResults) break;
+    if (p.followerCount < 100) continue;
+
+    const engRate = p.connectionsCount > 0
+      ? Math.round((p.followerCount / p.connectionsCount) * 100) / 100
+      : 1;
+
+    results.push({
+      platform: "linkedin",
+      handle: p.publicIdentifier,
+      name: p.fullName,
+      thumbnailUrl: p.profilePicUrl || "",
+      subscriberCount: p.followerCount,
+      engagementRate: Math.min(engRate, 10),
+      category: p.industry || extractCategory(p.headline || "", p.fullName),
+      fitScore: 0,
+      fitReason: (p.headline || "") + (p.about ? " — " + p.about.slice(0, 150) : ""),
+      estimatedReach: Math.round(p.followerCount * 0.1),
+      contentStyle: p.isCreator ? "Creator Mode" : p.isInfluencer ? "Top Voice" : "Professional",
+      isVerified: p.isInfluencer || p.isPremium,
+    });
   }
 
   return results;

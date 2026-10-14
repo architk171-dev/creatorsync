@@ -12,7 +12,7 @@ export interface AuditFlag {
 }
 
 export function auditCreator(
-  platform: "youtube" | "instagram",
+  platform: "youtube" | "instagram" | "twitter" | "linkedin",
   followers: number,
   following: number,
   engagementRate: number,
@@ -47,8 +47,8 @@ export function auditCreator(
     }
   }
 
-  // Follower/following ratio (Instagram-specific)
-  if (platform === "instagram" && following > 0) {
+  // Follower/following ratio (Instagram & Twitter)
+  if ((platform === "instagram" || platform === "twitter") && following > 0) {
     const ratio = followers / following;
     if (ratio > 10) {
       score += 5;

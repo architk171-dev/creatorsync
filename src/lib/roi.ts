@@ -14,17 +14,29 @@ const REACH_RATES: Record<string, { min: number; max: number }> = {
   instagram_post: { min: 0.08, max: 0.20 },
   youtube_video: { min: 0.20, max: 0.45 },
   youtube_short: { min: 0.25, max: 0.50 },
+  twitter_tweet: { min: 0.05, max: 0.15 },
+  twitter_thread: { min: 0.08, max: 0.20 },
+  twitter_video: { min: 0.10, max: 0.25 },
+  linkedin_post: { min: 0.08, max: 0.20 },
+  linkedin_article: { min: 0.04, max: 0.12 },
+  linkedin_carousel: { min: 0.10, max: 0.25 },
 };
 
 export function calculateROI(
-  platform: "youtube" | "instagram",
+  platform: "youtube" | "instagram" | "twitter" | "linkedin",
   followers: number,
   engagementRate: number,
   estimatedCost: number,
   contentType?: string
 ): ROIEstimate {
-  const key = contentType || (platform === "youtube" ? "youtube_video" : "instagram_reel");
-  const reachRate = REACH_RATES[key] || REACH_RATES[platform === "youtube" ? "youtube_video" : "instagram_reel"];
+  const defaultKeys: Record<string, string> = {
+    youtube: "youtube_video",
+    instagram: "instagram_reel",
+    twitter: "twitter_tweet",
+    linkedin: "linkedin_post",
+  };
+  const key = contentType || defaultKeys[platform] || "youtube_video";
+  const reachRate = REACH_RATES[key] || REACH_RATES[defaultKeys[platform] || "youtube_video"];
 
   const avgReach = (reachRate.min + reachRate.max) / 2;
   const reachMultiplier = engagementRate > 3 ? 1.2 : engagementRate < 1 ? 0.7 : 1;

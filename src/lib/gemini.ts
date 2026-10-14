@@ -7,6 +7,29 @@ import {
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
+function safeParseJSON(raw: string): any {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    // Clean common LLM JSON issues: trailing commas, unescaped newlines in strings, control chars
+    let cleaned = raw
+      .replace(/,\s*([\]}])/g, "$1") // trailing commas
+      .replace(/[\x00-\x1f]/g, (ch) => {
+        if (ch === "\n" || ch === "\r" || ch === "\t") return ch;
+        return "";
+      });
+    // Try to fix unescaped newlines inside string values
+    cleaned = cleaned.replace(/"([^"]*?)"/g, (match) => {
+      return match.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t");
+    });
+    try {
+      return JSON.parse(cleaned);
+    } catch (e2) {
+      throw new Error(`JSON parse failed after cleanup: ${(e2 as Error).message}`);
+    }
+  }
+}
+
 const MODELS = ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-flash-latest"];
 
 async function generateWithRetry(prompt: string): Promise<string> {
@@ -107,6 +130,8 @@ Respond ONLY with valid JSON (no markdown, no code fences):
     "engagementMin": <number between 1-10>,
     "contentKeywords": [<8-12 search keywords for finding creators in this niche — be specific, include both broad and niche terms>],
     "instagramUsernames": [<10-15 real Instagram usernames/handles of popular Indian creators in this niche who would be a good fit — no @ prefix, just the username. Include a mix of nano, micro, and mid-tier creators>],
+    "twitterHandles": [<5-10 real Twitter/X handles of popular creators in this niche — no @ prefix. Include thought leaders, commentators, and content creators active on X>],
+    "linkedinHandles": [<5-8 real LinkedIn profile usernames of thought leaders, industry experts, and professional influencers in this niche — just the slug from linkedin.com/in/SLUG>],
     "audienceMatch": "<one sentence describing ideal audience>",
     "platformFocus": "<which platform is more important and why>",
     "reasoning": "<2-3 sentences on why these criteria>"
@@ -147,7 +172,7 @@ Respond ONLY with valid JSON (no markdown, no code fences):
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error("Failed to parse Gemini response");
 
-  const parsed = JSON.parse(jsonMatch[0]);
+  const parsed = safeParseJSON(jsonMatch[0]);
 
   if (!parsed.insights.creativeIdeas) {
     parsed.insights.creativeIdeas = [];
@@ -245,7 +270,7 @@ Respond ONLY with a valid JSON array (no markdown, no code fences):
   const jsonMatch = text.match(/\[[\s\S]*\]/);
   if (!jsonMatch) return [];
 
-  return JSON.parse(jsonMatch[0]);
+  return safeParseJSON(jsonMatch[0]);
 }
 
 export async function generateDeliverableBrief(
@@ -350,5 +375,5 @@ Respond ONLY with valid JSON (no markdown, no code fences):
   const text = await generateWithRetry(prompt);
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error("Failed to generate deliverable brief");
-  return JSON.parse(jsonMatch[0]);
+  return safeParseJSON(jsonMatch[0]);
 }

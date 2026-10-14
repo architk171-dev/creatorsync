@@ -9,10 +9,21 @@ import {
 import { getInstagramProfile } from "@/lib/instagram";
 import { generateVerdict } from "@/lib/verdict";
 import type { ReportData } from "@/lib/types";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { trackEvent, logError } from "@/lib/events";
 
 export async function POST(request: NextRequest) {
+  let body: any = {};
   try {
-    const body = await request.json();
+    const ip = getClientIp(request);
+    const { ok } = rateLimit(`generate:${ip}`, 10, 60_000);
+    if (!ok) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a minute and try again." },
+        { status: 429 }
+      );
+    }
+    body = await request.json();
     const { youtubeHandle, email } = body;
     const instagramHandles: string[] = body.instagramHandles || [];
     const instagramHandle: string = body.instagramHandle || instagramHandles[0] || "";
@@ -132,9 +143,22 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    await trackEvent({
+      event: "report_generated",
+      email,
+      properties: {
+        youtubeHandle,
+        instagramHandle,
+        hasYoutube: !!report.youtube,
+        hasInstagram: !!report.instagram,
+        score: report.verdict.overallScore,
+      },
+    });
+
     return NextResponse.json(report);
   } catch (err) {
     console.error("Report generation error:", err);
+    await logError("/api/generate", err, { youtubeHandle: body?.youtubeHandle, email: body?.email });
     return NextResponse.json(
       { error: "Failed to generate report. Please try again." },
       { status: 500 }

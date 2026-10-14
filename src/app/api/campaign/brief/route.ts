@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { generateDeliverableBrief } from "@/lib/gemini";
 import { CampaignBrief } from "@/lib/types";
+import { trackEvent, logError } from "@/lib/events";
 
 export async function POST(req: Request) {
+  let reqBody: any = {};
   try {
-    const { brief, creator } = (await req.json()) as {
+    const { brief, creator } = reqBody = (await req.json()) as {
       brief: CampaignBrief;
       creator: {
         name: string;
@@ -26,9 +28,25 @@ export async function POST(req: Request) {
     }
 
     const deliverable = await generateDeliverableBrief(brief, creator);
+
+    await trackEvent({
+      event: "deep_report_generated",
+      properties: {
+        creatorHandle: creator.handle,
+        creatorPlatform: creator.platform,
+        brandName: brief.brandName,
+      },
+    });
+
     return NextResponse.json(deliverable);
   } catch (err) {
     console.error("Deliverable brief error:", err);
+    await logError("/api/campaign/brief", err, reqBody);
+    await trackEvent({
+      event: "deep_report_failed",
+      properties: { creatorHandle: reqBody?.creator?.handle },
+      error: err instanceof Error ? err.message : String(err),
+    });
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Failed to generate brief" },
       { status: 500 }

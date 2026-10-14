@@ -2,6 +2,65 @@ import { InstagramProfile, InstagramPost } from "./types";
 
 const APIFY_TOKEN = process.env.APIFY_API_TOKEN;
 
+export async function getInstagramProfiles(
+  usernames: string[]
+): Promise<InstagramProfile[]> {
+  const cleaned = usernames.map((u) =>
+    u.trim()
+      .replace(/^@/, "")
+      .replace(/^https?:\/\/(www\.)?instagram\.com\//, "")
+      .replace(/[?#].*$/, "")
+      .replace(/\/$/, "")
+  ).filter(Boolean);
+
+  if (cleaned.length === 0) return [];
+
+  const batch = cleaned.slice(0, 1);
+
+  console.log(`Apify IG batch: fetching ${batch.length} profiles: ${batch.join(", ")}`);
+  const startTime = Date.now();
+
+  try {
+    const res = await fetch(
+      "https://api.apify.com/v2/acts/apify~instagram-profile-scraper/run-sync-get-dataset-items?token=" +
+        APIFY_TOKEN +
+        "&timeout=15",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usernames: batch, resultsLimit: 3 }),
+        signal: AbortSignal.timeout(18000),
+        cache: "no-store",
+      }
+    );
+
+    console.log(`Apify IG batch responded: ${res.status} in ${Date.now() - startTime}ms`);
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.error(`Apify batch error: ${res.status} - ${text.slice(0, 200)}`);
+      return [];
+    }
+
+    const data = await res.json();
+    if (!Array.isArray(data)) {
+      console.error("Apify returned non-array:", JSON.stringify(data).slice(0, 200));
+      return [];
+    }
+
+    console.log(`Apify IG batch: got ${data.length} profiles in ${Date.now() - startTime}ms`);
+
+    return data
+      .filter((profile: { followersCount?: number; postsCount?: number }) =>
+        profile.followersCount || profile.postsCount
+      )
+      .map((profile: Record<string, unknown>) => parseInstagramProfile(profile));
+  } catch (e) {
+    console.error(`Apify batch failed after ${Date.now() - startTime}ms:`, e);
+    return [];
+  }
+}
+
 export async function getInstagramProfile(
   username: string
 ): Promise<InstagramProfile> {
@@ -45,29 +104,28 @@ export async function getInstagramProfile(
     );
   }
 
-  const posts: InstagramPost[] = (profile.latestPosts || [])
+  return parseInstagramProfile(profile, cleaned);
+}
+
+function parseInstagramProfile(
+  profile: Record<string, unknown>,
+  usernameOverride?: string
+): InstagramProfile {
+  const username = usernameOverride || (profile.username as string) || "unknown";
+
+  const posts: InstagramPost[] = ((profile.latestPosts as Array<Record<string, unknown>>) || [])
     .slice(0, 12)
     .map(
-      (p: {
-        id: string;
-        caption: string;
-        likesCount: number;
-        commentsCount: number;
-        timestamp: string;
-        type: string;
-        hashtags: string[];
-        mentions: string[];
-        url: string;
-      }) => ({
-        id: p.id,
-        caption: (p.caption || "").slice(0, 100),
-        likeCount: p.likesCount || 0,
-        commentCount: p.commentsCount || 0,
-        timestamp: p.timestamp,
-        type: p.type || "image",
-        hashtags: p.hashtags || [],
-        mentions: p.mentions || [],
-        url: p.url || "",
+      (p) => ({
+        id: p.id as string,
+        caption: ((p.caption as string) || "").slice(0, 100),
+        likeCount: (p.likesCount as number) || 0,
+        commentCount: (p.commentsCount as number) || 0,
+        timestamp: p.timestamp as string,
+        type: (p.type as string) || "image",
+        hashtags: (p.hashtags as string[]) || [],
+        mentions: (p.mentions as string[]) || [],
+        url: (p.url as string) || "",
       })
     );
 
@@ -75,12 +133,11 @@ export async function getInstagramProfile(
     (sum, p) => sum + p.likeCount + p.commentCount,
     0
   );
-  const avgEngagement =
-    posts.length > 0 ? totalEngagement / posts.length : 0;
-  const engagementRate =
-    profile.followersCount > 0
-      ? (avgEngagement / profile.followersCount) * 100
-      : 0;
+  const avgEngagement = posts.length > 0 ? totalEngagement / posts.length : 0;
+  const followersCount = (profile.followersCount as number) || 0;
+  const engagementRate = followersCount > 0
+    ? (avgEngagement / followersCount) * 100
+    : 0;
 
   const postFrequency = calculatePostFrequency(posts);
 
@@ -90,29 +147,29 @@ export async function getInstagramProfile(
     : typeof rawExtUrls === "string"
       ? [rawExtUrls]
       : [];
-  const relatedProfiles = (profile.relatedProfiles || []).slice(0, 5).map(
-    (rp: { username: string; full_name: string; is_verified: boolean }) => ({
-      username: rp.username,
-      fullName: rp.full_name || rp.username,
-      isVerified: rp.is_verified || false,
+  const relatedProfiles = ((profile.relatedProfiles as Array<Record<string, unknown>>) || []).slice(0, 5).map(
+    (rp) => ({
+      username: rp.username as string,
+      fullName: (rp.full_name as string) || (rp.username as string),
+      isVerified: (rp.is_verified as boolean) || false,
     })
   );
 
   return {
-    username: cleaned,
-    fullName: profile.fullName || cleaned,
-    biography: profile.biography || "",
-    followerCount: profile.followersCount || 0,
-    followingCount: profile.followsCount || 0,
-    postCount: profile.postsCount || 0,
-    profilePicUrl: profile.profilePicUrl || "",
-    profilePicUrlHD: profile.profilePicUrlHD || profile.profilePicUrl || "",
-    isVerified: profile.verified || false,
-    isBusinessAccount: profile.isBusinessAccount || false,
-    businessCategoryName: profile.businessCategoryName || null,
+    username,
+    fullName: (profile.fullName as string) || username,
+    biography: (profile.biography as string) || "",
+    followerCount: followersCount,
+    followingCount: (profile.followsCount as number) || 0,
+    postCount: (profile.postsCount as number) || 0,
+    profilePicUrl: (profile.profilePicUrl as string) || "",
+    profilePicUrlHD: (profile.profilePicUrlHD as string) || (profile.profilePicUrl as string) || "",
+    isVerified: (profile.verified as boolean) || false,
+    isBusinessAccount: (profile.isBusinessAccount as boolean) || false,
+    businessCategoryName: (profile.businessCategoryName as string) || null,
     externalUrl: externalUrls.length > 0 ? externalUrls[0] : null,
-    highlightReelCount: profile.highlightReelCount || 0,
-    igtvVideoCount: profile.igtvVideoCount || 0,
+    highlightReelCount: (profile.highlightReelCount as number) || 0,
+    igtvVideoCount: (profile.igtvVideoCount as number) || 0,
     relatedProfiles,
     recentPosts: posts,
     engagementRate: Math.round(engagementRate * 100) / 100,

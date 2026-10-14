@@ -64,7 +64,7 @@ export interface CampaignBrief {
   campaignGoals: CampaignGoal[];
   campaignGoal: CampaignGoal;
   targetAudience: string;
-  platforms: ("youtube" | "instagram")[];
+  platforms: ("youtube" | "instagram" | "twitter" | "linkedin")[];
   budgetRange: "under-1L" | "under-50K" | "1L-5L" | "5L-15L" | "15L-50L" | "above-50L";
   geography: string;
   description: string;
@@ -76,13 +76,15 @@ export interface CreatorCriteria {
   engagementMin: number;
   contentKeywords: string[];
   instagramUsernames?: string[];
+  twitterHandles?: string[];
+  linkedinHandles?: string[];
   audienceMatch: string;
   platformFocus: string;
   reasoning: string;
 }
 
 export interface CreatorRecommendation {
-  platform: "youtube" | "instagram";
+  platform: "youtube" | "instagram" | "twitter" | "linkedin";
   handle: string;
   name: string;
   thumbnailUrl: string;
