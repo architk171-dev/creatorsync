@@ -2,7 +2,8 @@
 
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState } from "react";
-import { LogIn, LogOut, User, ChevronDown } from "lucide-react";
+import { LogIn, LogOut, User, ChevronDown, LayoutDashboard } from "lucide-react";
+import Link from "next/link";
 
 export default function UserMenu() {
   const { data: session, status } = useSession();
@@ -55,6 +56,14 @@ export default function UserMenu() {
               <p className="text-sm font-medium truncate">{session.user?.name}</p>
               <p className="text-[11px] text-muted truncate">{session.user?.email}</p>
             </div>
+            <Link
+              href="/profile"
+              onClick={() => setOpen(false)}
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-muted hover:text-foreground hover:bg-background/50 transition"
+            >
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              Profile & History
+            </Link>
             <button
               onClick={() => { setOpen(false); signOut(); }}
               className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-muted hover:text-foreground hover:bg-background/50 transition"

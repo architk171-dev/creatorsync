@@ -43,6 +43,7 @@ import {
   Grid3X3,
   Activity,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { CampaignBrief, CampaignAnalysis, CampaignGoal, CreatorRecommendation, PlatformNote } from "@/lib/types";
 import { estimateCreatorPricing, formatPrice } from "@/lib/pricing";
 import { auditCreator, AuditResult } from "@/lib/audit";
@@ -147,6 +148,7 @@ interface DeliverableBrief {
 }
 
 export default function CampaignPage() {
+  const { data: session, status } = useSession();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -307,6 +309,45 @@ export default function CampaignPage() {
   const compareCreators = analysis?.recommendations.filter((c) =>
     compareIds.has(getCreatorKey(c))
   ) || [];
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="text-center max-w-sm">
+          <Shield className="w-12 h-12 text-accent mx-auto mb-4" />
+          <h1 className="text-xl font-bold mb-2">Sign in to plan campaigns</h1>
+          <p className="text-sm text-muted mb-6">
+            Campaign planning is available for signed-in users. Create a free account to get started.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Link
+              href="/auth/signin?callbackUrl=/campaign"
+              className="bg-accent hover:bg-accent-light text-white px-6 py-3 rounded-xl font-medium text-sm transition text-center"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/auth/signup?callbackUrl=/campaign"
+              className="border border-border hover:border-accent/40 text-muted hover:text-foreground px-6 py-3 rounded-xl text-sm transition text-center"
+            >
+              Create Account
+            </Link>
+          </div>
+          <Link href="/" className="inline-block text-xs text-muted hover:text-foreground mt-6 transition">
+            ← Back to home
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

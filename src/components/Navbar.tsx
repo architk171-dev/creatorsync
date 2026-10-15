@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Shield, Menu, X } from "lucide-react";
+import UserMenu from "./UserMenu";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -69,14 +70,18 @@ export default function Navbar() {
           >
             Plan Campaign
           </a>
+          <UserMenu />
         </div>
 
-        <button
-          className="md:hidden text-muted"
-          onClick={() => setOpen(!open)}
-        >
-          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="md:hidden flex items-center gap-3">
+          <UserMenu />
+          <button
+            className="text-muted"
+            onClick={() => setOpen(!open)}
+          >
+            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu with slide animation */}
