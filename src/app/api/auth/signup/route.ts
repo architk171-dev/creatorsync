@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { trackEvent } from "@/lib/events";
 
@@ -24,10 +25,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
     }
 
-    // Store password directly for now — replace with bcrypt before production
+    const hashedPassword = await bcrypt.hash(password, 12);
     const { data: user, error } = await getSupabaseAdmin()
       .from("users")
-      .insert({ name, email, password_hash: password, provider: "email" })
+      .insert({ name, email, password_hash: hashedPassword, provider: "email" })
       .select("id")
       .single();
 

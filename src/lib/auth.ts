@@ -1,6 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 import { getSupabaseAdmin } from "./supabase";
 
 export const authOptions: NextAuthOptions = {
@@ -26,8 +27,8 @@ export const authOptions: NextAuthOptions = {
 
         if (!user) return null;
 
-        // For now, simple check — replace with bcrypt in production
-        if (user.password_hash !== credentials.password) return null;
+        const valid = await bcrypt.compare(credentials.password, user.password_hash);
+        if (!valid) return null;
 
         return {
           id: user.id,
