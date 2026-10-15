@@ -43,7 +43,7 @@ import {
   Grid3X3,
   Activity,
 } from "lucide-react";
-import { CampaignBrief, CampaignAnalysis, CampaignGoal, CreatorRecommendation } from "@/lib/types";
+import { CampaignBrief, CampaignAnalysis, CampaignGoal, CreatorRecommendation, PlatformNote } from "@/lib/types";
 import { estimateCreatorPricing, formatPrice } from "@/lib/pricing";
 import { auditCreator, AuditResult } from "@/lib/audit";
 import { calculateROI, getBudgetNumber, formatCurrency } from "@/lib/roi";
@@ -752,6 +752,27 @@ export default function CampaignPage() {
                 <button onClick={() => setShowCompare(true)} className="bg-accent text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-accent-light transition cursor-pointer">
                   Compare Now
                 </button>
+              </div>
+            )}
+
+            {analysis.platformNotes && analysis.platformNotes.length > 0 && (
+              <div className="mb-4 space-y-2">
+                {analysis.platformNotes.map((note, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 rounded-xl border px-4 py-3"
+                    style={{
+                      borderColor: note.type === "weak_category" ? "rgba(234,179,8,0.3)" : "rgba(59,130,246,0.3)",
+                      background: note.type === "weak_category" ? "rgba(234,179,8,0.06)" : "rgba(59,130,246,0.06)",
+                    }}
+                  >
+                    <AlertTriangle
+                      className="w-4 h-4 mt-0.5 shrink-0"
+                      style={{ color: note.type === "weak_category" ? "#eab308" : "#3b82f6" }}
+                    />
+                    <p className="text-sm text-muted">{note.message}</p>
+                  </div>
+                ))}
               </div>
             )}
 

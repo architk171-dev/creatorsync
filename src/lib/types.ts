@@ -129,11 +129,18 @@ export interface CreatorRecommendation {
   };
 }
 
+export interface PlatformNote {
+  platform: "twitter" | "linkedin";
+  type: "weak_category" | "no_results" | "low_results";
+  message: string;
+}
+
 export interface CampaignAnalysis {
   id: string;
   brief: CampaignBrief;
   criteria: CreatorCriteria;
   recommendations: CreatorRecommendation[];
+  platformNotes?: PlatformNote[];
   aiInsights: {
     campaignStrategy: string;
     idealCreatorProfile: string;

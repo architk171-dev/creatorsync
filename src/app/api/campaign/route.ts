@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CampaignBrief, CampaignAnalysis } from "@/lib/types";
+import { CampaignBrief, CampaignAnalysis, PlatformNote } from "@/lib/types";
 import { analyzeCampaignBrief, scoreCreatorFit } from "@/lib/gemini";
 import {
   searchYouTubeCreators,
@@ -102,6 +102,62 @@ function heuristicFitScore(c: import("@/lib/types").CreatorRecommendation): numb
   return Math.min(score, 95);
 }
 
+const PLATFORM_CATEGORY_STRENGTH: Record<string, { twitter: "strong" | "moderate" | "weak"; linkedin: "strong" | "moderate" | "weak"; suggestion: string }> = {
+  "Tech & Gadgets":       { twitter: "strong",  linkedin: "moderate", suggestion: "" },
+  "Gaming":               { twitter: "strong",  linkedin: "weak",     suggestion: "Gaming communities are centered on YouTube, Twitch, and Instagram — LinkedIn has minimal gaming creator presence." },
+  "Beauty & Skincare":    { twitter: "moderate", linkedin: "weak",     suggestion: "Beauty creators primarily operate on Instagram and YouTube. Consider focusing your budget on those platforms for this category." },
+  "Fashion & Lifestyle":  { twitter: "moderate", linkedin: "weak",     suggestion: "Fashion and lifestyle content thrives on Instagram and YouTube. Twitter/LinkedIn have limited fashion creator ecosystems." },
+  "Food & Cooking":       { twitter: "weak",     linkedin: "weak",     suggestion: "Food creators are predominantly on YouTube and Instagram where visual content performs best. Twitter and LinkedIn have very few dedicated food creators." },
+  "Fitness & Health":     { twitter: "moderate", linkedin: "moderate", suggestion: "" },
+  "Finance & Investing":  { twitter: "strong",  linkedin: "strong",   suggestion: "" },
+  "Education":            { twitter: "moderate", linkedin: "strong",   suggestion: "" },
+  "Travel":               { twitter: "moderate", linkedin: "weak",     suggestion: "Travel content is visual-first — YouTube and Instagram are the primary platforms. LinkedIn travel creators are rare." },
+  "Music":                { twitter: "moderate", linkedin: "weak",     suggestion: "Music promotion works best on YouTube and Instagram. LinkedIn has almost no music creator ecosystem." },
+  "Automotive":           { twitter: "moderate", linkedin: "weak",     suggestion: "Automotive creators are primarily on YouTube. Twitter has some presence but LinkedIn coverage is minimal." },
+  "Entertainment & Comedy": { twitter: "strong", linkedin: "weak",     suggestion: "Comedy and entertainment creators rarely operate on LinkedIn. Focus on YouTube, Instagram, and Twitter for best results." },
+  "Real Estate":          { twitter: "moderate", linkedin: "strong",   suggestion: "" },
+  "Parenting & Family":   { twitter: "weak",     linkedin: "weak",     suggestion: "Parenting content is YouTube and Instagram-centric. Twitter and LinkedIn have very limited family/parenting creator presence." },
+  "Sports":               { twitter: "strong",  linkedin: "weak",     suggestion: "Sports commentary thrives on Twitter but LinkedIn has minimal sports creator activity." },
+};
+
+function generatePlatformNotes(
+  category: string,
+  platforms: string[],
+  platformResults: Map<string, number>,
+): PlatformNote[] {
+  const notes: PlatformNote[] = [];
+  const strength = PLATFORM_CATEGORY_STRENGTH[category];
+
+  for (const platform of ["twitter", "linkedin"] as const) {
+    if (!platforms.includes(platform)) continue;
+    const count = platformResults.get(platform) ?? 0;
+
+    if (count === 0) {
+      if (strength && strength[platform] === "weak") {
+        notes.push({
+          platform,
+          type: "weak_category",
+          message: strength.suggestion || `${category} campaigns typically don't perform well on ${platform === "twitter" ? "Twitter/X" : "LinkedIn"} — creator presence for this category is limited on this platform.`,
+        });
+      } else {
+        notes.push({
+          platform,
+          type: "no_results",
+          message: `No ${platform === "twitter" ? "Twitter/X" : "LinkedIn"} creators found for this campaign. This can happen when the search terms are too niche — try adding more specific competitor brands or broadening the description.`,
+        });
+      }
+    } else if (count <= 2 && strength && strength[platform] === "weak") {
+      notes.push({
+        platform,
+        type: "low_results",
+        message: `Only ${count} ${platform === "twitter" ? "Twitter/X" : "LinkedIn"} creator${count > 1 ? "s" : ""} found. ${category} has limited presence on this platform — consider reallocating that budget to YouTube or Instagram.`,
+      });
+    }
+  }
+
+  return notes;
+}
+
 export async function POST(req: Request) {
   const startTime = Date.now();
   let brief = {} as CampaignBrief;
@@ -159,6 +215,7 @@ export async function POST(req: Request) {
     }));
 
     const creatorPromises: Promise<import("@/lib/types").CreatorRecommendation[]>[] = [];
+    const promisePlatformLabels: string[] = [];
 
     creatorPromises.push(
       searchYouTubeCreators(criteria.contentKeywords, 15).then((r) => {
@@ -169,6 +226,7 @@ export async function POST(req: Request) {
         return [];
       })
     );
+    promisePlatformLabels.push("youtube");
 
     if (brief.platforms.includes("instagram")) {
       let igUsernames = criteria.instagramUsernames || [];
@@ -196,6 +254,7 @@ export async function POST(req: Request) {
           ),
         ])
       );
+      promisePlatformLabels.push("instagram");
     }
 
     if (brief.platforms.includes("twitter")) {
@@ -224,6 +283,7 @@ export async function POST(req: Request) {
           ),
         ])
       );
+      promisePlatformLabels.push("twitter");
     }
 
     if (brief.platforms.includes("linkedin")) {
@@ -252,9 +312,18 @@ export async function POST(req: Request) {
           ),
         ])
       );
+      promisePlatformLabels.push("linkedin");
     }
 
     const creatorResults = await Promise.all(creatorPromises);
+
+    const platformResults = new Map<string, number>();
+    creatorResults.forEach((r, i) => {
+      platformResults.set(promisePlatformLabels[i], r.length);
+    });
+
+    const platformNotes = generatePlatformNotes(brief.category, brief.platforms, platformResults);
+
     let allCreators = creatorResults.flat();
 
     allCreators = mergeMultiPlatformCreators(allCreators);
@@ -327,6 +396,7 @@ export async function POST(req: Request) {
       brief,
       criteria,
       recommendations: allCreators.slice(0, 15),
+      platformNotes: platformNotes.length > 0 ? platformNotes : undefined,
       aiInsights: insights,
       createdAt: new Date().toISOString(),
     };
