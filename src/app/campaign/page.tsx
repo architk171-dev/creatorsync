@@ -508,69 +508,78 @@ export default function CampaignPage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-              <InsightCard icon={<Lightbulb className="w-5 h-5" />} title="Campaign Strategy" text={analysis.aiInsights.campaignStrategy} />
-              <InsightCard icon={<Users className="w-5 h-5" />} title="Ideal Creator Profile" text={analysis.aiInsights.idealCreatorProfile} />
-              <InsightCard icon={<DollarSign className="w-5 h-5" />} title="Budget Allocation" text={analysis.aiInsights.budgetAllocation} />
-              <InsightCard icon={<BarChart3 className="w-5 h-5" />} title="Expected Outcomes" text={analysis.aiInsights.expectedOutcomes} />
-            </div>
-
-            {/* Creative Ideas */}
-            {analysis.aiInsights.creativeIdeas && analysis.aiInsights.creativeIdeas.length > 0 && (
-              <div className="bg-gradient-to-br from-accent/5 to-accent/10 border border-accent/20 rounded-2xl p-6 mb-8">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-accent mb-4 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" /> Creative Campaign Ideas
-                </h3>
-                <div className="space-y-4">
-                  {analysis.aiInsights.creativeIdeas.map((idea, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <span className="w-7 h-7 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i + 1}</span>
-                      <p className="text-sm text-foreground leading-relaxed">{idea}</p>
-                    </div>
-                  ))}
-                </div>
+            <CollapsibleSection
+              title="AI Strategy & Insights"
+              icon={<Lightbulb className="w-4 h-4" />}
+              preview={analysis.aiInsights.campaignStrategy.slice(0, 120) + "..."}
+              defaultOpen={false}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <InsightCard icon={<Lightbulb className="w-5 h-5" />} title="Campaign Strategy" text={analysis.aiInsights.campaignStrategy} />
+                <InsightCard icon={<Users className="w-5 h-5" />} title="Ideal Creator Profile" text={analysis.aiInsights.idealCreatorProfile} />
+                <InsightCard icon={<DollarSign className="w-5 h-5" />} title="Budget Allocation" text={analysis.aiInsights.budgetAllocation} />
+                <InsightCard icon={<BarChart3 className="w-5 h-5" />} title="Expected Outcomes" text={analysis.aiInsights.expectedOutcomes} />
               </div>
-            )}
 
-            {/* Anti-Patterns */}
-            {analysis.aiInsights.antiPatterns && analysis.aiInsights.antiPatterns.length > 0 && (
-              <div className="bg-danger/5 border border-danger/20 rounded-2xl p-6 mb-8">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-danger mb-4 flex items-center gap-2">
-                  <Ban className="w-4 h-4" /> What NOT to Do
-                </h3>
-                <div className="space-y-3">
-                  {analysis.aiInsights.antiPatterns.map((pattern, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <span className="text-danger font-bold shrink-0 mt-0.5">✕</span>
-                      <p className="text-sm text-muted leading-relaxed">{pattern}</p>
-                    </div>
-                  ))}
+              {analysis.aiInsights.creativeIdeas && analysis.aiInsights.creativeIdeas.length > 0 && (
+                <div className="bg-gradient-to-br from-accent/5 to-accent/10 border border-accent/20 rounded-2xl p-6 mb-6">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-accent mb-4 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" /> Creative Campaign Ideas
+                  </h3>
+                  <div className="space-y-4">
+                    {analysis.aiInsights.creativeIdeas.map((idea, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <span className="w-7 h-7 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i + 1}</span>
+                        <p className="text-sm text-foreground leading-relaxed">{idea}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {analysis.aiInsights.clicheApproaches && analysis.aiInsights.clicheApproaches.length > 0 && (
-              <div className="bg-warning/5 border border-warning/20 rounded-2xl p-6 mb-8">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-warning mb-2 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" /> Cliché Approaches We Avoided
-                </h3>
-                <p className="text-[10px] text-muted mb-3">The AI identified these overdone approaches in {analysis.brief.category} and explicitly avoided them when generating ideas above.</p>
-                <div className="flex flex-wrap gap-2">
-                  {analysis.aiInsights.clicheApproaches.map((cliche, i) => (
-                    <span key={i} className="text-[10px] bg-warning/10 text-warning/80 px-2.5 py-1 rounded-full border border-warning/20 line-through decoration-warning/40">
-                      {cliche}
-                    </span>
-                  ))}
+              {analysis.aiInsights.antiPatterns && analysis.aiInsights.antiPatterns.length > 0 && (
+                <div className="bg-danger/5 border border-danger/20 rounded-2xl p-6 mb-6">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-danger mb-4 flex items-center gap-2">
+                    <Ban className="w-4 h-4" /> What NOT to Do
+                  </h3>
+                  <div className="space-y-3">
+                    {analysis.aiInsights.antiPatterns.map((pattern, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <span className="text-danger font-bold shrink-0 mt-0.5">✕</span>
+                        <p className="text-sm text-muted leading-relaxed">{pattern}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {analysis.aiInsights.clicheApproaches && analysis.aiInsights.clicheApproaches.length > 0 && (
+                <div className="bg-warning/5 border border-warning/20 rounded-2xl p-6">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-warning mb-2 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" /> Cliché Approaches We Avoided
+                  </h3>
+                  <p className="text-[10px] text-muted mb-3">The AI identified these overdone approaches in {analysis.brief.category} and explicitly avoided them when generating ideas above.</p>
+                  <div className="flex flex-wrap gap-2">
+                    {analysis.aiInsights.clicheApproaches.map((cliche, i) => (
+                      <span key={i} className="text-[10px] bg-warning/10 text-warning/80 px-2.5 py-1 rounded-full border border-warning/20 line-through decoration-warning/40">
+                        {cliche}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CollapsibleSection>
 
             {/* Feature 1: Creative Performance Benchmarks */}
             {analysis.aiInsights.benchmarks && analysis.aiInsights.benchmarks.topFormats.length > 0 && (
-              <div className="bg-gradient-to-br from-blue-500/5 to-purple-500/5 border border-blue-500/20 rounded-2xl p-6 mb-8">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-blue-400 mb-4 flex items-center gap-2">
-                  <Activity className="w-4 h-4" /> Category Benchmarks — {analysis.brief.category}
-                </h3>
+              <CollapsibleSection
+                title={`Category Benchmarks — ${analysis.brief.category}`}
+                icon={<Activity className="w-4 h-4" />}
+                preview={`Top formats: ${analysis.aiInsights.benchmarks.topFormats.slice(0, 2).join(", ")}`}
+                defaultOpen={false}
+              >
+              <div className="bg-gradient-to-br from-blue-500/5 to-purple-500/5 border border-blue-500/20 rounded-2xl p-6">
+                <div className="hidden"></div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div>
                     <p className="text-[10px] text-muted font-bold uppercase tracking-wider mb-2">Top Content Formats</p>
@@ -608,9 +617,16 @@ export default function CampaignPage() {
                   </div>
                 )}
               </div>
+              </CollapsibleSection>
             )}
 
-            {/* Feature 2: Campaign Performance Predictor */}
+            {/* Feature 2: Campaign Performance Predictor + Heatmap */}
+            <CollapsibleSection
+              title="Performance Predictions & Fit Heatmap"
+              icon={<TrendingUp className="w-4 h-4" />}
+              preview={`Budget: ${brief.budgetRange} · ${analysis.recommendations.length} creators scored`}
+              defaultOpen={false}
+            >
             {analysis.recommendations.length > 0 && (() => {
               const totalBudget = getBudgetNumber(brief.budgetRange);
               const perCreator = totalBudget / Math.min(analysis.recommendations.length, 5);
@@ -702,6 +718,7 @@ export default function CampaignPage() {
                 </table>
               </div>
             )}
+            </CollapsibleSection>
 
             <div className="bg-card rounded-2xl border border-border p-6 mb-8">
               <h3 className="text-sm font-bold uppercase tracking-wider text-accent mb-3">AI-Generated Creator Criteria</h3>
@@ -934,10 +951,42 @@ export default function CampaignPage() {
 }
 
 function InsightCard({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+  const sentences = text.split(/(?<=\.)\s+/).filter(Boolean);
+  const highlight = sentences[0] || text;
+  const rest = sentences.slice(1).join(" ");
   return (
     <div className="bg-card rounded-2xl border border-border p-5">
-      <div className="flex items-center gap-2 mb-2 text-accent">{icon}<h4 className="text-sm font-bold">{title}</h4></div>
-      <p className="text-sm text-muted leading-relaxed">{text}</p>
+      <div className="flex items-center gap-2 mb-3 text-accent">{icon}<h4 className="text-xs font-bold uppercase tracking-wider">{title}</h4></div>
+      <p className="text-sm text-foreground font-medium leading-relaxed mb-1">{highlight}</p>
+      {rest && <p className="text-xs text-muted leading-relaxed">{rest}</p>}
+    </div>
+  );
+}
+
+function CollapsibleSection({ title, icon, preview, defaultOpen, children }: {
+  title: string;
+  icon: React.ReactNode;
+  preview: string;
+  defaultOpen: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="bg-card rounded-2xl border border-border mb-6 overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between p-5 text-left hover:bg-card/80 transition"
+      >
+        <div className="flex items-center gap-2 text-accent">
+          {icon}
+          <h3 className="text-sm font-bold uppercase tracking-wider">{title}</h3>
+        </div>
+        <div className="flex items-center gap-3">
+          {!open && <p className="text-xs text-muted hidden sm:block max-w-[300px] truncate">{preview}</p>}
+          {open ? <ChevronUp className="w-4 h-4 text-muted" /> : <ChevronDown className="w-4 h-4 text-muted" />}
+        </div>
+      </button>
+      {open && <div className="px-5 pb-5">{children}</div>}
     </div>
   );
 }
@@ -1014,9 +1063,27 @@ function CreatorCard({ creator, budgetRange, onDeepReport, isComparing, onToggle
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${scoreColor}`}>{creator.fitScore}%</span>
               <TrustBadge audit={audit} />
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap mt-0.5">
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                creator.platform === "youtube" ? "bg-red-500/15 text-red-400 border border-red-500/30" :
+                creator.platform === "instagram" ? "bg-pink-500/15 text-pink-400 border border-pink-500/30" :
+                creator.platform === "twitter" ? "bg-sky-500/15 text-sky-400 border border-sky-500/30" :
+                "bg-blue-500/15 text-blue-400 border border-blue-500/30"
+              }`}>
+                {creator.platform === "youtube" ? "▶ YouTube" : creator.platform === "instagram" ? "📷 Instagram" : creator.platform === "twitter" ? "𝕏 Twitter" : "💼 LinkedIn"}
+              </span>
+              {creator.otherPlatforms && creator.otherPlatforms.length > 0 && creator.otherPlatforms.map((p) => (
+                <span key={p} className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                  p === "youtube" ? "bg-red-500/10 text-red-400/70 border border-red-500/20" :
+                  p === "instagram" ? "bg-pink-500/10 text-pink-400/70 border border-pink-500/20" :
+                  p === "twitter" ? "bg-sky-500/10 text-sky-400/70 border border-sky-500/20" :
+                  "bg-blue-500/10 text-blue-400/70 border border-blue-500/20"
+                }`}>
+                  {p === "youtube" ? "▶ YT" : p === "instagram" ? "📷 IG" : p === "twitter" ? "𝕏" : "💼 LI"}
+                </span>
+              ))}
               <p className="text-xs text-muted">
-                @{creator.handle} · <span className="capitalize">{creator.platform}</span>
+                @{creator.handle}
                 {creator.isBusinessAccount && <span className="ml-1 text-accent">· Business</span>}
               </p>
               {igUrl && (
@@ -1037,7 +1104,7 @@ function CreatorCard({ creator, budgetRange, onDeepReport, isComparing, onToggle
 
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3">
           <div className="bg-background/50 rounded-lg p-2">
-            <p className="text-[9px] text-muted">Followers</p>
+            <p className="text-[9px] text-muted">{creator.platform === "youtube" ? "Subscribers" : "Followers"}</p>
             <p className="text-sm font-bold">{formatNumber(creator.subscriberCount)}</p>
           </div>
           <div className="bg-background/50 rounded-lg p-2">

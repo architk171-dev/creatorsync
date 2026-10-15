@@ -56,6 +56,52 @@ async function fetchCompetitorContext(
   return undefined;
 }
 
+function normalizeCreatorName(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+}
+
+function mergeMultiPlatformCreators(
+  creators: import("@/lib/types").CreatorRecommendation[]
+): import("@/lib/types").CreatorRecommendation[] {
+  const groups = new Map<string, import("@/lib/types").CreatorRecommendation[]>();
+  for (const c of creators) {
+    const key = normalizeCreatorName(c.name);
+    if (!key) { groups.set(c.handle, [c]); continue; }
+    const existing = groups.get(key);
+    if (existing) existing.push(c);
+    else groups.set(key, [c]);
+  }
+
+  const merged: import("@/lib/types").CreatorRecommendation[] = [];
+  for (const group of groups.values()) {
+    if (group.length === 1) {
+      merged.push(group[0]);
+      continue;
+    }
+    group.sort((a, b) => b.subscriberCount - a.subscriberCount);
+    const primary = { ...group[0] };
+    primary.otherPlatforms = group
+      .slice(1)
+      .map((c) => c.platform)
+      .filter((p) => p !== primary.platform);
+    merged.push(primary);
+  }
+  return merged;
+}
+
+function heuristicFitScore(c: import("@/lib/types").CreatorRecommendation): number {
+  let score = 30;
+  if (c.engagementRate >= 5) score += 25;
+  else if (c.engagementRate >= 2) score += 15;
+  else if (c.engagementRate >= 0.5) score += 8;
+  if (c.subscriberCount >= 1_000_000) score += 20;
+  else if (c.subscriberCount >= 100_000) score += 15;
+  else if (c.subscriberCount >= 10_000) score += 10;
+  if (c.isVerified) score += 5;
+  if (c.performance?.avgLikes && c.performance.avgLikes > 1000) score += 5;
+  return Math.min(score, 95);
+}
+
 export async function POST(req: Request) {
   const startTime = Date.now();
   let brief = {} as CampaignBrief;
@@ -135,19 +181,9 @@ export async function POST(req: Request) {
           }
         }
       }
-      // Prioritize well-known handles that actually exist on Instagram
-      const knownHandles: Record<string, string[]> = {
-        "Food & Cooking": ["mumbaifoodicious", "mumbaifoodie"],
-        "Fashion & Lifestyle": ["stylebyami"],
-        "Tech & Gadgets": ["techburner"],
-        "Fitness & Health": [],
-      };
-      const categorySeeds = knownHandles[brief.category] || [];
-      const existingSet = new Set(igUsernames.map((h: string) => h.toLowerCase()));
-      for (const seed of categorySeeds) {
-        if (!existingSet.has(seed.toLowerCase())) {
-          igUsernames.unshift(seed);
-        }
+      if (igUsernames.length === 0) {
+        console.log("No IG usernames from Gemini, using content keyword search fallback");
+        igUsernames = (criteria.contentKeywords || []).slice(0, 5);
       }
       creatorPromises.push(
         Promise.race([
@@ -173,19 +209,21 @@ export async function POST(req: Request) {
           }
         }
       }
-      if (twHandles.length > 0) {
-        creatorPromises.push(
-          Promise.race([
-            searchTwitterCreators(twHandles, 8).catch((e) => {
-              console.error("Twitter search failed:", e);
-              return [] as import("@/lib/types").CreatorRecommendation[];
-            }),
-            new Promise<import("@/lib/types").CreatorRecommendation[]>((resolve) =>
-              setTimeout(() => { console.log("Twitter search timed out"); resolve([]); }, 20000)
-            ),
-          ])
-        );
+      if (twHandles.length === 0) {
+        console.log("No Twitter handles from Gemini, using content keyword search fallback");
+        twHandles = (criteria.contentKeywords || []).slice(0, 3);
       }
+      creatorPromises.push(
+        Promise.race([
+          searchTwitterCreators(twHandles, 8).catch((e) => {
+            console.error("Twitter search failed:", e);
+            return [] as import("@/lib/types").CreatorRecommendation[];
+          }),
+          new Promise<import("@/lib/types").CreatorRecommendation[]>((resolve) =>
+            setTimeout(() => { console.log("Twitter search timed out"); resolve([]); }, 20000)
+          ),
+        ])
+      );
     }
 
     if (brief.platforms.includes("linkedin")) {
@@ -199,23 +237,27 @@ export async function POST(req: Request) {
           }
         }
       }
-      if (liHandles.length > 0) {
-        creatorPromises.push(
-          Promise.race([
-            searchLinkedInCreators(liHandles, 5).catch((e) => {
-              console.error("LinkedIn search failed:", e);
-              return [] as import("@/lib/types").CreatorRecommendation[];
-            }),
-            new Promise<import("@/lib/types").CreatorRecommendation[]>((resolve) =>
-              setTimeout(() => { console.log("LinkedIn search timed out"); resolve([]); }, 20000)
-            ),
-          ])
-        );
+      if (liHandles.length === 0) {
+        console.log("No LinkedIn handles from Gemini, using content keyword search fallback");
+        liHandles = (criteria.contentKeywords || []).slice(0, 3);
       }
+      creatorPromises.push(
+        Promise.race([
+          searchLinkedInCreators(liHandles, 5).catch((e) => {
+            console.error("LinkedIn search failed:", e);
+            return [] as import("@/lib/types").CreatorRecommendation[];
+          }),
+          new Promise<import("@/lib/types").CreatorRecommendation[]>((resolve) =>
+            setTimeout(() => { console.log("LinkedIn search timed out"); resolve([]); }, 20000)
+          ),
+        ])
+      );
     }
 
     const creatorResults = await Promise.all(creatorPromises);
     let allCreators = creatorResults.flat();
+
+    allCreators = mergeMultiPlatformCreators(allCreators);
 
     const elapsed = Date.now() - startTime;
     console.log(`Creator discovery: ${allCreators.length} total (${creatorResults.map((r, i) => `source${i}:${r.length}`).join(", ")}) in ${elapsed}ms`);
@@ -267,14 +309,17 @@ export async function POST(req: Request) {
           };
         });
 
+        allCreators = allCreators.map((c) => ({ ...c, fitScore: c.fitScore || heuristicFitScore(c) }));
         allCreators.sort((a, b) => b.fitScore - a.fitScore);
       } catch (e) {
         console.log("Scoring skipped:", e instanceof Error ? e.message : "timeout");
-        allCreators.sort((a, b) => b.subscriberCount - a.subscriberCount);
+        allCreators = allCreators.map((c) => ({ ...c, fitScore: c.fitScore || heuristicFitScore(c) }));
+        allCreators.sort((a, b) => b.fitScore - a.fitScore);
       }
     } else if (allCreators.length > 0) {
-      console.log(`Skipping scoring (${elapsed}ms elapsed), sorting by subscribers`);
-      allCreators.sort((a, b) => b.subscriberCount - a.subscriberCount);
+      console.log(`Skipping scoring (${elapsed}ms elapsed), using heuristic scores`);
+      allCreators = allCreators.map((c) => ({ ...c, fitScore: c.fitScore || heuristicFitScore(c) }));
+      allCreators.sort((a, b) => b.fitScore - a.fitScore);
     }
 
     const analysis: CampaignAnalysis = {

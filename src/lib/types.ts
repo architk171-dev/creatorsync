@@ -119,6 +119,7 @@ export interface CreatorRecommendation {
     count: number;
   }[];
   bestFormat?: string;
+  otherPlatforms?: string[];
   fitDimensions?: {
     audienceMatch: number;
     engagementQuality: number;

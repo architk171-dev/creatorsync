@@ -1,0 +1,871 @@
+<title>NoCap Verify PRD</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&display=swap">
+<style>
+  /* Dark-first document — editorial intelligence report aesthetic */
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --border: #1e1e2a;
+    --fg: #e8e6e1;
+    --fg-muted: #8a8890;
+    --accent: #6366f1;
+    --accent-soft: rgba(99,102,241,0.12);
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'Space Mono', 'SF Mono', monospace;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #fafaf9;
+      --surface: #ffffff;
+      --border: #e5e5e0;
+      --fg: #1a1a1f;
+      --fg-muted: #71717a;
+      --accent: #4f46e5;
+      --accent-soft: rgba(79,70,229,0.08);
+      --green: #16a34a;
+      --amber: #d97706;
+      --red: #dc2626;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e5e5e0;
+    --fg: #1a1a1f;
+    --fg-muted: #71717a;
+    --accent: #4f46e5;
+    --accent-soft: rgba(79,70,229,0.08);
+    --green: #16a34a;
+    --amber: #d97706;
+    --red: #dc2626;
+    color-scheme: light;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    line-height: 1.65;
+    padding-inline: 24px;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  h1, h2, h3, h4 { font-weight: 600; line-height: 1.2; text-wrap: balance; }
+  h1 { font-size: 2.2rem; margin: 3rem 0 0.5rem; letter-spacing: -0.03em; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); letter-spacing: -0.02em; }
+  h3 { font-size: 1.1rem; margin: 2rem 0 0.75rem; color: var(--accent); }
+  h4 { font-size: 0.95rem; margin: 1.5rem 0 0.5rem; }
+  p { margin: 0 0 1rem; }
+
+  .doc-header {
+    padding: 3rem 0 2rem;
+    border-bottom: 2px solid var(--accent);
+    margin-bottom: 2rem;
+  }
+  .doc-header .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+  .doc-header h1 { margin: 0 0 0.75rem; font-size: 2.5rem; }
+  .doc-header .subtitle { color: var(--fg-muted); font-size: 1.05rem; max-width: 600px; }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 2rem 0;
+  }
+  .meta-cell {
+    background: var(--surface);
+    padding: 1rem 1.25rem;
+  }
+  .meta-cell .label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    margin-bottom: 0.25rem;
+  }
+  .meta-cell .value { font-weight: 600; font-size: 0.9rem; }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    margin: 2rem 0;
+  }
+  .toc h3 { margin-top: 0; color: var(--fg); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; font-family: var(--font-mono); }
+  .toc ol { padding-left: 1.5rem; margin: 0; }
+  .toc li { margin: 0.4rem 0; font-size: 0.9rem; color: var(--fg-muted); }
+  .toc a { color: var(--fg); text-decoration: none; border-bottom: 1px solid var(--border); }
+  .toc a:hover { color: var(--accent); border-color: var(--accent); }
+
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+  .feature-card h4 { margin-top: 0; display: flex; align-items: center; gap: 0.5rem; }
+  .feature-card .badge {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .badge-live { background: rgba(34,197,94,0.15); color: var(--green); }
+  .badge-placeholder { background: rgba(245,158,11,0.15); color: var(--amber); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin: 1rem 0;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--fg-muted);
+    background: var(--surface);
+  }
+  td { vertical-align: top; }
+
+  .flow-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin: 1rem 0;
+    font-size: 0.88rem;
+  }
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+  }
+  .flow-step + .flow-step { border-top: 1px dashed var(--border); }
+  .step-num {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 1.5rem;
+    padding-top: 0.15rem;
+  }
+
+  .arch-section {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem;
+    border-radius: 0 6px 6px 0;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+
+  .persona-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .persona {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+  }
+  .persona h4 { margin-top: 0; font-size: 1rem; }
+  .persona p { font-size: 0.85rem; color: var(--fg-muted); margin-bottom: 0.5rem; }
+  .persona ul { padding-left: 1.25rem; margin: 0; font-size: 0.82rem; }
+  .persona li { margin: 0.25rem 0; }
+
+  .env-table { overflow-x: auto; }
+
+  /* Flow diagram styles */
+  .flow-diagram { margin: 1.5rem 0 2.5rem; padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow-x: auto; }
+  .flow-diagram svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  .flow-diagram svg text { font-family: var(--font-body); fill: var(--fg); }
+  .flow-diagram svg .label { font-size: 13px; font-weight: 600; }
+  .flow-diagram svg .sub { font-size: 11px; fill: var(--fg-muted); }
+  .flow-diagram svg .node-rect { fill: var(--surface); stroke: var(--border); stroke-width: 1; rx: 8; }
+  .flow-diagram svg .node-accent { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; rx: 8; }
+  .flow-diagram svg .node-green { fill: rgba(34,197,94,0.08); stroke: var(--green); stroke-width: 1; rx: 8; }
+  .flow-diagram svg .node-amber { fill: rgba(245,158,11,0.08); stroke: var(--amber); stroke-width: 1; rx: 8; }
+  .flow-diagram svg .node-red { fill: rgba(239,68,68,0.08); stroke: var(--red); stroke-width: 1; rx: 8; }
+  .flow-diagram svg .connector { stroke: var(--fg-muted); stroke-width: 1.5; fill: none; marker-end: url(#flowArrow); }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.8em;
+    background: var(--accent-soft);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+  }
+
+  .section-part { margin-top: 4rem; }
+  .section-part > h2:first-child { font-size: 1.8rem; color: var(--accent); border-bottom: 2px solid var(--accent); }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 3rem 0;
+  }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 1.6rem; }
+    .doc-header h1 { font-size: 1.8rem; }
+    h2 { font-size: 1.25rem; }
+    .meta-grid { grid-template-columns: 1fr 1fr; }
+    .persona-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="doc-header">
+  <div class="eyebrow">Product Requirements Document</div>
+  <h1>NoCap Verify</h1>
+  <p class="subtitle">AI-powered influencer due diligence platform for brands, agencies, and creator teams. Production v1.0 — deployed October 2026.</p>
+</div>
+
+<div class="meta-grid">
+  <div class="meta-cell">
+    <div class="label">Product</div>
+    <div class="value">NoCap Verify</div>
+  </div>
+  <div class="meta-cell">
+    <div class="label">Domain</div>
+    <div class="value">nocapverify.in</div>
+  </div>
+  <div class="meta-cell">
+    <div class="label">Version</div>
+    <div class="value">1.0 (Production)</div>
+  </div>
+  <div class="meta-cell">
+    <div class="label">Last Deploy</div>
+    <div class="value">Oct 14, 2026</div>
+  </div>
+  <div class="meta-cell">
+    <div class="label">Author</div>
+    <div class="value">Archit Kumar</div>
+  </div>
+  <div class="meta-cell">
+    <div class="label">Stack</div>
+    <div class="value">Next.js · Supabase · Gemini</div>
+  </div>
+</div>
+
+<nav class="toc">
+  <h3>Contents</h3>
+  <ol>
+    <li><a href="#part1">Part 1 — Product Requirements</a></li>
+    <li><a href="#vision">Vision &amp; Problem Statement</a></li>
+    <li><a href="#personas">Target Personas</a></li>
+    <li><a href="#features">Feature Inventory</a></li>
+    <li><a href="#flows">User Flows</a></li>
+    <li><a href="#part2">Part 2 — Technical Architecture</a></li>
+    <li><a href="#stack">Tech Stack</a></li>
+    <li><a href="#arch">System Architecture</a></li>
+    <li><a href="#data">Data Model</a></li>
+    <li><a href="#integrations">External Integrations</a></li>
+    <li><a href="#env">Environment &amp; Config</a></li>
+    <li><a href="#roadmap">Roadmap &amp; Gaps</a></li>
+  </ol>
+</nav>
+
+<!-- ============================================ -->
+<!-- PART 1: PRODUCT REQUIREMENTS                 -->
+<!-- ============================================ -->
+
+<div class="section-part" id="part1">
+  <h2>Part 1 — Product Requirements</h2>
+</div>
+
+<h2 id="vision">1. Vision &amp; Problem Statement</h2>
+
+<p><strong>Problem:</strong> Brands spend $21B+ annually on influencer marketing, yet 25–40% of influencer audiences are estimated to be fake or inactive. Brand managers lack efficient tools to verify creator authenticity, estimate fair pricing, predict campaign ROI, or compare creators across platforms before committing budget.</p>
+
+<p><strong>Solution:</strong> NoCap Verify is an AI-powered due diligence platform that generates verification reports, trust scores, pricing estimates, and campaign-ready briefs — giving brands and agencies the data they need to make confident influencer investment decisions.</p>
+
+<p><strong>Core Value Proposition:</strong> Enter a creator handle → get a comprehensive verification report with trust scoring, fake follower detection, engagement auditing, pricing benchmarks, and ROI projections — in under 60 seconds.</p>
+
+<h2 id="personas">2. Target Personas</h2>
+
+<div class="persona-grid">
+  <div class="persona">
+    <h4>Brand Manager</h4>
+    <p>Marketing lead at a D2C or enterprise brand running influencer campaigns.</p>
+    <ul>
+      <li>Needs to verify creators before signing contracts</li>
+      <li>Must justify influencer spend to leadership</li>
+      <li>Wants ROI projections and pricing benchmarks</li>
+      <li>Manages 5–50 creator partnerships per quarter</li>
+    </ul>
+  </div>
+  <div class="persona">
+    <h4>PR / Talent Agency</h4>
+    <p>Agency managing multiple brand accounts and creator rosters.</p>
+    <ul>
+      <li>Runs multi-brand campaigns simultaneously</li>
+      <li>Needs to match creators to brand briefs at scale</li>
+      <li>Requires competitive intelligence on rival campaigns</li>
+      <li>Values speed and bulk verification</li>
+    </ul>
+  </div>
+  <div class="persona">
+    <h4>Creator / Manager</h4>
+    <p>Content creator or their talent manager seeking brand deals.</p>
+    <ul>
+      <li>Wants to know their own trust score and market rate</li>
+      <li>Needs a shareable verification report as proof of legitimacy</li>
+      <li>Interested in competitive positioning vs. peers</li>
+    </ul>
+  </div>
+</div>
+
+<h2 id="features">3. Feature Inventory</h2>
+
+<h3>3.1 Creator Verification Engine</h3>
+<div class="feature-card">
+  <h4>Instagram + YouTube Report Generation <span class="badge badge-live">Live</span></h4>
+  <p><strong>What:</strong> User enters a YouTube handle/URL and/or Instagram handle(s). The system fetches real data from both platforms, runs a proprietary audit algorithm, and generates a comprehensive report.</p>
+  <p><strong>Who it's for:</strong> Brand managers verifying a creator before signing. Agencies vetting talent roster. Creators checking their own standing.</p>
+  <p><strong>Report includes:</strong></p>
+  <ul>
+    <li><strong>Trust Score (0–100)</strong> — composite score based on engagement-to-follower ratio, growth patterns, and content consistency</li>
+    <li><strong>Verdict</strong> — Trusted / Caution / Suspicious with specific flags (e.g., "engagement rate below category benchmark," "suspicious follower spike")</li>
+    <li><strong>Engagement audit</strong> — likes, comments, views analyzed against category benchmarks</li>
+    <li><strong>Pricing estimate</strong> — market rate by platform and content type (post, story, reel, video) based on follower tier</li>
+    <li><strong>ROI projections</strong> — estimated impressions, CPM, cost-per-engagement</li>
+    <li><strong>Recent content analysis</strong> — last 10–20 posts/videos with individual performance metrics</li>
+    <li><strong>Multi-handle support</strong> — enter multiple Instagram handles in one request</li>
+  </ul>
+</div>
+
+<div class="feature-card">
+  <h4>Twitter / X Verification <span class="badge badge-live">Live</span></h4>
+  <p><strong>What:</strong> Enter a Twitter handle to get follower audit, engagement analysis, and verification status check.</p>
+  <p><strong>Who it's for:</strong> Brands evaluating Twitter-native creators or verifying cross-platform presence.</p>
+</div>
+
+<div class="feature-card">
+  <h4>LinkedIn Verification <span class="badge badge-live">Live</span></h4>
+  <p><strong>What:</strong> Enter a LinkedIn profile to audit professional influence — connections, engagement, professional credibility.</p>
+  <p><strong>Who it's for:</strong> B2B brands and agencies targeting professional/thought-leader creators.</p>
+</div>
+
+<h3>3.2 AI Campaign Planner</h3>
+<div class="feature-card">
+  <h4>Campaign Brief Analysis &amp; Creator Matching <span class="badge badge-live">Live</span></h4>
+  <p><strong>What:</strong> User enters a structured campaign brief (brand name, category, budget, goals, target audience, platforms). Gemini AI analyzes the brief, then the system searches for matching creators across YouTube, Instagram, Twitter, and LinkedIn. Each creator is scored for brand fit.</p>
+  <p><strong>Who it's for:</strong> Brand managers planning a new campaign. Agencies pitching creator lists to clients.</p>
+  <p><strong>Brief includes:</strong></p>
+  <ul>
+    <li>Multi-goal support (awareness, conversions, content, community)</li>
+    <li>Platform selection (YouTube, Instagram, Twitter, LinkedIn)</li>
+    <li>Budget range and timeline</li>
+    <li>Target audience demographics</li>
+    <li>Brand guidelines and anti-AI detection prompts</li>
+  </ul>
+  <p><strong>Output:</strong> Ranked list of creator recommendations with fit scores, estimated costs, audience overlap analysis, and suggested content formats.</p>
+</div>
+
+<div class="feature-card">
+  <h4>Deliverable Brief Generation <span class="badge badge-live">Live</span></h4>
+  <p><strong>What:</strong> For any matched creator, generate a detailed deliverable brief with scripts, content directions, posting schedules, and budget allocation.</p>
+  <p><strong>Who it's for:</strong> Brand managers who need ready-to-send briefs for selected creators.</p>
+</div>
+
+<h3>3.3 Competitor Intelligence</h3>
+<div class="feature-card">
+  <h4>Competitor Campaign Tracker <span class="badge badge-live">Live</span></h4>
+  <p><strong>What:</strong> Enter 1–3 competitor brand names and a category. Gemini AI identifies which creators those brands have worked with, their content strategies, and estimated spend.</p>
+  <p><strong>Who it's for:</strong> Brand strategists benchmarking against competitors. Agencies building competitive pitch decks.</p>
+</div>
+
+<h3>3.4 Martech Features</h3>
+<div class="feature-card">
+  <h4>Creative Performance Benchmarks <span class="badge badge-live">Live</span></h4>
+  <p>Industry benchmarks by category and platform — engagement rates, view rates, growth rates — used as baselines in verification reports and campaign scoring.</p>
+</div>
+<div class="feature-card">
+  <h4>Campaign Performance Predictor <span class="badge badge-live">Live</span></h4>
+  <p>ROI projections (impressions, CPM, cost-per-engagement) calculated per creator based on their actual metrics and the campaign's budget.</p>
+</div>
+<div class="feature-card">
+  <h4>Content Format Scoring <span class="badge badge-live">Live</span></h4>
+  <p>Analysis of which content formats (reels, stories, long-form video, static posts) perform best for each creator based on historical data.</p>
+</div>
+<div class="feature-card">
+  <h4>Creator Pricing Engine <span class="badge badge-live">Live</span></h4>
+  <p>Market-rate pricing estimates by platform, follower tier (Nano through Mega), and content type. Integrated into verification reports.</p>
+</div>
+
+<h3>3.5 Platform &amp; Infrastructure</h3>
+<div class="feature-card">
+  <h4>Authentication <span class="badge badge-live">Live</span></h4>
+  <p>NextAuth with Google OAuth and email/password. JWT sessions. User records stored in Supabase. Sign-in button currently hidden (awaiting Google OAuth credentials on production).</p>
+</div>
+<div class="feature-card">
+  <h4>Event Tracking / Analytics <span class="badge badge-live">Live</span></h4>
+  <p>Server-side event logging to Supabase <code>events</code> table. Tracks: report generation, campaign analysis, deep report requests, sign-ups, errors with stack traces. Client-side fire-and-forget tracking via <code>/api/events</code>.</p>
+</div>
+<div class="feature-card">
+  <h4>Rate Limiting &amp; Caching <span class="badge badge-live">Live</span></h4>
+  <p>In-memory per-IP rate limiting (10 req/min per endpoint). In-memory response cache with TTL expiration. Resets on deploy.</p>
+</div>
+<div class="feature-card">
+  <h4>Payments (Razorpay) <span class="badge badge-placeholder">Placeholder</span></h4>
+  <p>API routes stubbed for Razorpay order creation and webhook handling. Not yet wired.</p>
+</div>
+
+<h2 id="flows">4. User Flows</h2>
+
+<h3>Flow 1: Creator Verification</h3>
+<div class="flow-box">
+  <div class="flow-step"><span class="step-num">01</span><span>User lands on homepage → scrolls to "Verify" section or clicks "Verify Creator" in navbar</span></div>
+  <div class="flow-step"><span class="step-num">02</span><span>Enters YouTube channel URL/handle + Instagram handle(s) + email in GenerateForm</span></div>
+  <div class="flow-step"><span class="step-num">03</span><span>System resolves YouTube channel via Data API → fetches channel stats + recent 20 videos</span></div>
+  <div class="flow-step"><span class="step-num">04</span><span>System fetches Instagram profile via Apify scraper → follower count, engagement, recent posts</span></div>
+  <div class="flow-step"><span class="step-num">05</span><span>Audit engine calculates trust score (engagement ratio, growth patterns, category benchmarks)</span></div>
+  <div class="flow-step"><span class="step-num">06</span><span>Pricing engine estimates market rates by tier. ROI engine projects campaign performance</span></div>
+  <div class="flow-step"><span class="step-num">07</span><span>ReportPreview renders full report inline: trust score, verdict, flags, pricing, videos, engagement charts</span></div>
+  <div class="flow-step"><span class="step-num">08</span><span>Event tracked to Supabase: <code>report_generated</code> with creator handle + platform</span></div>
+</div>
+
+<div class="flow-diagram">
+<svg viewBox="0 0 680 480" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="flowArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="var(--fg-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+  <rect class="node-rect" x="230" y="20" width="220" height="52"/>
+  <text class="label" x="340" y="40" text-anchor="middle">User enters handles</text>
+  <text class="sub" x="340" y="58" text-anchor="middle">YouTube + Instagram + Email</text>
+  <line class="connector" x1="340" y1="72" x2="340" y2="100"/>
+  <rect class="node-accent" x="200" y="100" width="280" height="40"/>
+  <text class="label" x="340" y="124" text-anchor="middle">POST /api/generate</text>
+  <line class="connector" x1="260" y1="140" x2="160" y2="180"/>
+  <line class="connector" x1="420" y1="140" x2="520" y2="180"/>
+  <rect class="node-green" x="60" y="180" width="200" height="52"/>
+  <text class="label" x="160" y="200" text-anchor="middle">YouTube Data API</text>
+  <text class="sub" x="160" y="218" text-anchor="middle">Channel + 20 videos</text>
+  <rect class="node-red" x="420" y="180" width="200" height="52"/>
+  <text class="label" x="520" y="200" text-anchor="middle">Apify IG scraper</text>
+  <text class="sub" x="520" y="218" text-anchor="middle">Profile + posts</text>
+  <line class="connector" x1="160" y1="232" x2="260" y2="275"/>
+  <line class="connector" x1="520" y1="232" x2="420" y2="275"/>
+  <rect class="node-accent" x="180" y="275" width="320" height="52"/>
+  <text class="label" x="340" y="295" text-anchor="middle">Audit engine + Verdict</text>
+  <text class="sub" x="340" y="313" text-anchor="middle">Trust score · Pricing · ROI</text>
+  <line class="connector" x1="340" y1="327" x2="340" y2="360"/>
+  <rect class="node-amber" x="180" y="360" width="320" height="52"/>
+  <text class="label" x="340" y="380" text-anchor="middle">ReportPreview</text>
+  <text class="sub" x="340" y="398" text-anchor="middle">Score · Verdict · Flags · Charts</text>
+  <line class="connector" x1="340" y1="412" x2="340" y2="440"/>
+  <rect class="node-rect" x="240" y="440" width="200" height="30" rx="6"/>
+  <text class="sub" x="340" y="459" text-anchor="middle">Event → Supabase</text>
+</svg>
+</div>
+
+<h3>Flow 2: Campaign Planning</h3>
+<div class="flow-box">
+  <div class="flow-step"><span class="step-num">01</span><span>User navigates to /campaign → fills campaign brief form (brand, category, budget, goals, platforms, audience)</span></div>
+  <div class="flow-step"><span class="step-num">02</span><span>Form state auto-saved to sessionStorage (survives browser back/forward)</span></div>
+  <div class="flow-step"><span class="step-num">03</span><span>POST to /api/campaign → Gemini analyzes brief → extracts search queries and matching criteria</span></div>
+  <div class="flow-step"><span class="step-num">04</span><span>Discover engine searches creators across selected platforms (YouTube API search, Apify for IG/Twitter/LinkedIn)</span></div>
+  <div class="flow-step"><span class="step-num">05</span><span>Gemini scores each creator for brand fit (audience alignment, content style, engagement quality)</span></div>
+  <div class="flow-step"><span class="step-num">06</span><span>Results displayed as ranked creator cards with fit scores, estimated costs, suggested formats</span></div>
+  <div class="flow-step"><span class="step-num">07</span><span>User clicks "Generate Brief" on any creator → POST to /api/campaign/brief → Gemini produces deliverable brief with scripts, schedules, budgets</span></div>
+  <div class="flow-step"><span class="step-num">08</span><span>Events tracked: <code>campaign_analyzed</code>, <code>deep_report_generated</code></span></div>
+</div>
+
+<div class="flow-diagram">
+<svg viewBox="0 0 700 520" xmlns="http://www.w3.org/2000/svg">
+  <rect class="node-rect" x="200" y="20" width="300" height="52"/>
+  <text class="label" x="350" y="40" text-anchor="middle">Brand manager opens /campaign</text>
+  <text class="sub" x="350" y="58" text-anchor="middle">Goals · Budget · Niche</text>
+  <line class="connector" x1="350" y1="72" x2="350" y2="100"/>
+  <rect class="node-accent" x="200" y="100" width="300" height="40"/>
+  <text class="label" x="350" y="124" text-anchor="middle">POST /api/campaign</text>
+  <line class="connector" x1="350" y1="140" x2="350" y2="175"/>
+  <rect class="node-green" x="160" y="175" width="380" height="52"/>
+  <text class="label" x="350" y="195" text-anchor="middle">Gemini AI — strategy generation</text>
+  <text class="sub" x="350" y="213" text-anchor="middle">3-model fallback · safeParseJSON</text>
+  <line class="connector" x1="250" y1="227" x2="170" y2="265"/>
+  <line class="connector" x1="450" y1="227" x2="530" y2="265"/>
+  <rect class="node-accent" x="60" y="265" width="220" height="52"/>
+  <text class="label" x="170" y="285" text-anchor="middle">Creator discovery</text>
+  <text class="sub" x="170" y="303" text-anchor="middle">YT + IG + TW + LI search</text>
+  <rect class="node-red" x="420" y="265" width="220" height="52"/>
+  <text class="label" x="530" y="285" text-anchor="middle">Content pillars</text>
+  <text class="sub" x="530" y="303" text-anchor="middle">Topics · Hooks · Formats</text>
+  <line class="connector" x1="170" y1="317" x2="270" y2="355"/>
+  <line class="connector" x1="530" y1="317" x2="430" y2="355"/>
+  <rect class="node-amber" x="170" y="355" width="360" height="52"/>
+  <text class="label" x="350" y="375" text-anchor="middle">Campaign plan output</text>
+  <text class="sub" x="350" y="393" text-anchor="middle">Creators · Timeline · Budget split · KPIs</text>
+  <line class="connector" x1="350" y1="407" x2="350" y2="435"/>
+  <rect class="node-accent" x="200" y="435" width="300" height="40"/>
+  <text class="label" x="350" y="459" text-anchor="middle">Saved to Supabase campaigns table</text>
+  <line class="connector" x1="350" y1="475" x2="350" y2="495"/>
+  <rect class="node-rect" x="220" y="495" width="260" height="24" rx="6"/>
+  <text class="sub" x="350" y="511" text-anchor="middle">Event: campaign_generated → Supabase</text>
+</svg>
+</div>
+
+<h3>Flow 3: Competitor Intelligence</h3>
+<div class="flow-box">
+  <div class="flow-step"><span class="step-num">01</span><span>User navigates to /competitor → enters 1–3 competitor brand names + industry category</span></div>
+  <div class="flow-step"><span class="step-num">02</span><span>POST to /api/competitor → Gemini generates analysis of each brand's influencer strategy</span></div>
+  <div class="flow-step"><span class="step-num">03</span><span>Returns: identified creators per brand, estimated spend, content strategy breakdown, collaboration types</span></div>
+  <div class="flow-step"><span class="step-num">04</span><span>Results displayed in structured comparison view</span></div>
+</div>
+
+<div class="flow-diagram">
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg">
+  <rect class="node-rect" x="200" y="20" width="300" height="52"/>
+  <text class="label" x="350" y="40" text-anchor="middle">User opens /competitor</text>
+  <text class="sub" x="350" y="58" text-anchor="middle">Enters competitor brand URL</text>
+  <line class="connector" x1="350" y1="72" x2="350" y2="100"/>
+  <rect class="node-accent" x="200" y="100" width="300" height="40"/>
+  <text class="label" x="350" y="124" text-anchor="middle">POST /api/competitor</text>
+  <line class="connector" x1="350" y1="140" x2="350" y2="175"/>
+  <rect class="node-green" x="160" y="175" width="380" height="52"/>
+  <text class="label" x="350" y="195" text-anchor="middle">Apify web scraper</text>
+  <text class="sub" x="350" y="213" text-anchor="middle">Competitor social profiles + recent posts</text>
+  <line class="connector" x1="350" y1="227" x2="350" y2="260"/>
+  <rect class="node-accent" x="160" y="260" width="380" height="52"/>
+  <text class="label" x="350" y="280" text-anchor="middle">Gemini AI analysis</text>
+  <text class="sub" x="350" y="298" text-anchor="middle">Strategy gaps · Creator overlap · Spend est.</text>
+  <line class="connector" x1="350" y1="312" x2="350" y2="345"/>
+  <rect class="node-amber" x="140" y="345" width="420" height="52"/>
+  <text class="label" x="350" y="365" text-anchor="middle">Intel report</text>
+  <text class="sub" x="350" y="383" text-anchor="middle">Competitor creators · Content mix · Opportunities</text>
+</svg>
+</div>
+
+<h3>Flow 4: Twitter / LinkedIn Verification</h3>
+<div class="flow-box">
+  <div class="flow-step"><span class="step-num">01</span><span>User navigates to /twitter or /linkedin</span></div>
+  <div class="flow-step"><span class="step-num">02</span><span>Enters handle → POST to /api/twitter or /api/linkedin</span></div>
+  <div class="flow-step"><span class="step-num">03</span><span>Apify fetches profile data → audit engine scores → report rendered</span></div>
+</div>
+
+<div class="flow-diagram">
+<svg viewBox="0 0 700 460" xmlns="http://www.w3.org/2000/svg">
+  <rect class="node-rect" x="180" y="20" width="340" height="52"/>
+  <text class="label" x="350" y="40" text-anchor="middle">User navigates to /twitter or /linkedin</text>
+  <text class="sub" x="350" y="58" text-anchor="middle">Enters handle or profile URL</text>
+  <line class="connector" x1="350" y1="72" x2="350" y2="100"/>
+  <rect class="node-accent" x="180" y="100" width="340" height="40"/>
+  <text class="label" x="350" y="124" text-anchor="middle">POST /api/twitter or /api/linkedin</text>
+  <line class="connector" x1="250" y1="140" x2="160" y2="180"/>
+  <line class="connector" x1="450" y1="140" x2="540" y2="180"/>
+  <rect class="node-green" x="50" y="180" width="220" height="52"/>
+  <text class="label" x="160" y="200" text-anchor="middle">Apify Twitter scraper</text>
+  <text class="sub" x="160" y="218" text-anchor="middle">Tweets · Followers · Bio</text>
+  <rect class="node-red" x="430" y="180" width="220" height="52"/>
+  <text class="label" x="540" y="200" text-anchor="middle">Apify LinkedIn scraper</text>
+  <text class="sub" x="540" y="218" text-anchor="middle">Posts · Connections · Headline</text>
+  <line class="connector" x1="160" y1="232" x2="270" y2="275"/>
+  <line class="connector" x1="540" y1="232" x2="430" y2="275"/>
+  <rect class="node-accent" x="170" y="275" width="360" height="52"/>
+  <text class="label" x="350" y="295" text-anchor="middle">Gemini AI analysis</text>
+  <text class="sub" x="350" y="313" text-anchor="middle">Authenticity · Engagement quality · Audience fit</text>
+  <line class="connector" x1="350" y1="327" x2="350" y2="360"/>
+  <rect class="node-amber" x="170" y="360" width="360" height="52"/>
+  <text class="label" x="350" y="380" text-anchor="middle">Platform-specific report</text>
+  <text class="sub" x="350" y="398" text-anchor="middle">Score · Red flags · Audience breakdown</text>
+  <line class="connector" x1="350" y1="412" x2="350" y2="435"/>
+  <rect class="node-rect" x="190" y="435" width="320" height="24" rx="6"/>
+  <text class="sub" x="350" y="451" text-anchor="middle">Event: social_verification → Supabase</text>
+</svg>
+</div>
+
+<hr class="divider">
+
+<!-- ============================================ -->
+<!-- PART 2: TECHNICAL ARCHITECTURE               -->
+<!-- ============================================ -->
+
+<div class="section-part" id="part2">
+  <h2>Part 2 — Technical Architecture</h2>
+</div>
+
+<h2 id="stack">5. Tech Stack</h2>
+
+<div class="env-table">
+<table>
+  <thead>
+    <tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Framework</td><td>Next.js 15 (App Router)</td><td>Full-stack React framework, SSR + API routes</td></tr>
+    <tr><td>Language</td><td>TypeScript</td><td>Type safety across frontend and backend</td></tr>
+    <tr><td>Styling</td><td>Tailwind CSS</td><td>Utility-first styling</td></tr>
+    <tr><td>Database</td><td>Supabase (PostgreSQL)</td><td>User storage, event tracking, reports, campaigns</td></tr>
+    <tr><td>Auth</td><td>NextAuth v4</td><td>Google OAuth + email/password, JWT sessions</td></tr>
+    <tr><td>AI</td><td>Google Gemini</td><td>Campaign analysis, creator scoring, brief generation, competitor intel</td></tr>
+    <tr><td>YouTube Data</td><td>YouTube Data API v3</td><td>Channel resolution, stats, video data</td></tr>
+    <tr><td>Scraping</td><td>Apify</td><td>Instagram, Twitter, LinkedIn profile scraping</td></tr>
+    <tr><td>Hosting</td><td>Vercel</td><td>Auto-deploy from GitHub, edge network</td></tr>
+    <tr><td>Animations</td><td>GSAP</td><td>Scroll animations, navbar effects (landing page)</td></tr>
+    <tr><td>Smooth Scroll</td><td>Lenis</td><td>Smooth scroll provider</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="arch">6. System Architecture</h2>
+
+<div class="arch-section">
+  <strong>Deployment:</strong> Vercel auto-deploys from <code>main</code> branch on GitHub (<code>architk171-dev/creatorsync</code>). Serverless functions handle all API routes with 60s max duration on long-running endpoints.
+</div>
+
+<h3>6.1 Application Structure</h3>
+
+<pre class="mermaid">
+graph TB
+  subgraph Client["Client (Browser)"]
+    LP["Landing Page"]
+    CF["Campaign Form"]
+    CI["Competitor Intel"]
+    TW["Twitter Page"]
+    LI["LinkedIn Page"]
+    GF["GenerateForm"]
+  end
+
+  subgraph API["Next.js API Routes (Vercel Serverless)"]
+    AG["/api/generate"]
+    AC["/api/campaign"]
+    AB["/api/campaign/brief"]
+    ACO["/api/competitor"]
+    AT["/api/twitter"]
+    AL["/api/linkedin"]
+    AE["/api/events"]
+    AA["/api/auth/[...nextauth]"]
+    AS["/api/auth/signup"]
+  end
+
+  subgraph Services["Core Services (src/lib)"]
+    YT["youtube.ts"]
+    IG["instagram.ts"]
+    TWT["twitter.ts"]
+    LIN["linkedin.ts"]
+    GEM["gemini.ts"]
+    AUD["audit.ts"]
+    VER["verdict.ts"]
+    ROI["roi.ts"]
+    PRC["pricing.ts"]
+    DSC["discover.ts"]
+    EVT["events.ts"]
+    AUTH["auth.ts"]
+    RL["rate-limit.ts"]
+    CACHE["cache.ts"]
+  end
+
+  subgraph External["External APIs"]
+    YTAPI["YouTube Data API v3"]
+    APIFY["Apify Scrapers"]
+    GAPI["Google Gemini AI"]
+    SUPA["Supabase (PostgreSQL)"]
+  end
+
+  GF --> AG
+  CF --> AC
+  CF --> AB
+  CI --> ACO
+  TW --> AT
+  LI --> AL
+
+  AG --> YT & IG & AUD & VER & ROI & PRC
+  AC --> GEM & DSC
+  AB --> GEM
+  ACO --> GEM
+  AT --> TWT & AUD
+  AL --> LIN & AUD
+
+  AG & AC & AB & ACO & AT & AL --> EVT
+  AG & AC & AT & AL --> RL & CACHE
+
+  YT --> YTAPI
+  IG & TWT & LIN --> APIFY
+  GEM --> GAPI
+  EVT & AUTH --> SUPA
+  DSC --> YT & IG & TWT & LIN
+</pre>
+
+<h3>6.2 Request Flow Architecture</h3>
+
+<div class="arch-section">
+  <strong>API Pattern:</strong> Every API route follows the same structure: rate limit check → cache check → fetch external data → process/score → track event → return JSON response. Errors are caught, logged to Supabase via <code>logError()</code>, and return structured error responses.
+</div>
+
+<h3>6.3 AI Pipeline (Gemini)</h3>
+<p>The Gemini integration uses a <strong>3-model fallback chain</strong> for resilience:</p>
+<ol>
+  <li><code>gemini-3.5-flash</code> (primary — fast, capable)</li>
+  <li><code>gemini-3.5-flash-lite</code> (fallback — lighter)</li>
+  <li><code>gemini-flash-latest</code> (last resort)</li>
+</ol>
+<p>All Gemini responses are parsed with <code>safeParseJSON()</code> which handles common LLM output issues: trailing commas, control characters, unescaped newlines inside strings.</p>
+
+<h2 id="data">7. Data Model</h2>
+
+<h3>Supabase Tables</h3>
+
+<div class="env-table">
+<table>
+  <thead>
+    <tr><th>Table</th><th>Key Columns</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>users</code></td>
+      <td>id (uuid), name, email (unique), password_hash, avatar_url, provider (google/email), created_at</td>
+      <td>User accounts — created via Google OAuth or email signup</td>
+    </tr>
+    <tr>
+      <td><code>campaigns</code></td>
+      <td>id, user_id (FK), brief (jsonb), analysis (jsonb), created_at</td>
+      <td>Saved campaign briefs and their analysis results</td>
+    </tr>
+    <tr>
+      <td><code>reports</code></td>
+      <td>id, user_id (FK), creator_handle, platform, report_data (jsonb), created_at</td>
+      <td>Generated verification reports</td>
+    </tr>
+    <tr>
+      <td><code>events</code></td>
+      <td>id, event_name, user_id, email, properties (jsonb), error_message, endpoint, request_body, stack_trace, created_at</td>
+      <td>Analytics events and error logs</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>All tables have Row-Level Security (RLS) enabled with appropriate policies. Indexes on <code>events.event_name</code>, <code>events.created_at</code>, <code>users.email</code>.</p>
+
+<h2 id="integrations">8. External Integrations</h2>
+
+<div class="env-table">
+<table>
+  <thead>
+    <tr><th>Service</th><th>What It Does</th><th>How It Connects</th><th>Rate / Cost</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>YouTube Data API v3</strong></td>
+      <td>Resolve channel from handle/URL, fetch subscriber count, view count, video count, recent videos with stats</td>
+      <td>REST API via <code>youtube.ts</code> — API key auth</td>
+      <td>10,000 units/day free</td>
+    </tr>
+    <tr>
+      <td><strong>Apify</strong></td>
+      <td>Scrape Instagram, Twitter, LinkedIn profiles — follower counts, engagement, posts, verification status</td>
+      <td>REST API via <code>instagram.ts</code>, <code>twitter.ts</code>, <code>linkedin.ts</code> — run-sync-get-dataset-items</td>
+      <td>Pay per compute unit</td>
+    </tr>
+    <tr>
+      <td><strong>Google Gemini</strong></td>
+      <td>Campaign brief analysis, creator-brand fit scoring, deliverable brief generation, competitor intel</td>
+      <td><code>@google/generative-ai</code> SDK via <code>gemini.ts</code> — API key auth</td>
+      <td>Free tier available</td>
+    </tr>
+    <tr>
+      <td><strong>Supabase</strong></td>
+      <td>PostgreSQL database for users, campaigns, reports, events. Service role key for server-side writes</td>
+      <td><code>@supabase/supabase-js</code> via <code>supabase.ts</code> — lazy initialization</td>
+      <td>Free tier: 500MB, 50K auth users</td>
+    </tr>
+    <tr>
+      <td><strong>NextAuth</strong></td>
+      <td>Authentication — Google OAuth + email/password credentials provider</td>
+      <td><code>next-auth</code> v4 — JWT strategy, custom sign-in page</td>
+      <td>Open source / free</td>
+    </tr>
+    <tr>
+      <td><strong>Vercel</strong></td>
+      <td>Hosting, CI/CD, serverless functions, edge network, custom domain</td>
+      <td>Auto-deploy from GitHub push to <code>main</code></td>
+      <td>Hobby plan (free)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="env">9. Environment Variables</h2>
+
+<div class="env-table">
+<table>
+  <thead>
+    <tr><th>Variable</th><th>Where Used</th><th>Status on Prod</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>YOUTUBE_API_KEY</code></td><td>youtube.ts, discover.ts</td><td>✅ Set</td></tr>
+    <tr><td><code>APIFY_API_TOKEN</code></td><td>instagram.ts, twitter.ts, linkedin.ts</td><td>✅ Set</td></tr>
+    <tr><td><code>GEMINI_API_KEY</code></td><td>gemini.ts, competitor route</td><td>✅ Set</td></tr>
+    <tr><td><code>NEXT_PUBLIC_SUPABASE_URL</code></td><td>supabase.ts (client)</td><td>✅ Set</td></tr>
+    <tr><td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td><td>supabase.ts (client)</td><td>✅ Set</td></tr>
+    <tr><td><code>SUPABASE_SERVICE_ROLE_KEY</code></td><td>supabase.ts (admin)</td><td>✅ Set</td></tr>
+    <tr><td><code>NEXTAUTH_SECRET</code></td><td>auth.ts</td><td>✅ Set</td></tr>
+    <tr><td><code>NEXTAUTH_URL</code></td><td>NextAuth config</td><td>✅ Set</td></tr>
+    <tr><td><code>NEXT_PUBLIC_APP_URL</code></td><td>App base URL</td><td>✅ Set</td></tr>
+    <tr><td><code>GOOGLE_CLIENT_ID</code></td><td>auth.ts (OAuth)</td><td>❌ Not set</td></tr>
+    <tr><td><code>GOOGLE_CLIENT_SECRET</code></td><td>auth.ts (OAuth)</td><td>❌ Not set</td></tr>
+    <tr><td><code>RAZORPAY_KEY_ID</code></td><td>payment routes</td><td>❌ Not set (placeholder)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="roadmap">10. Roadmap &amp; Known Gaps</h2>
+
+<div class="env-table">
+<table>
+  <thead>
+    <tr><th>Item</th><th>Status</th><th>Priority</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Google OAuth credentials for production</td><td>❌ Not configured</td><td style="color:var(--red)">High</td></tr>
+    <tr><td>Re-enable Sign In button in Navbar once OAuth works</td><td>❌ Hidden</td><td style="color:var(--red)">High</td></tr>
+    <tr><td>Bcrypt password hashing (currently plaintext)</td><td>❌ TODO</td><td style="color:var(--red)">Critical</td></tr>
+    <tr><td>GSAP landing page redesign</td><td>🟡 Ready locally, not deployed</td><td style="color:var(--amber)">Medium</td></tr>
+    <tr><td>Razorpay payment integration</td><td>❌ Stubbed</td><td style="color:var(--amber)">Medium</td></tr>
+    <tr><td>Persistent cache (Redis/KV) instead of in-memory</td><td>❌ Not started</td><td style="color:var(--fg-muted)">Low</td></tr>
+    <tr><td>Email delivery via Resend</td><td>❌ Not wired</td><td style="color:var(--fg-muted)">Low</td></tr>
+    <tr><td>Three.js / React Three Fiber 3D hero</td><td>❌ Installed, not built</td><td style="color:var(--fg-muted)">Low</td></tr>
+    <tr><td>Route-level auth middleware</td><td>❌ No middleware.ts</td><td style="color:var(--amber)">Medium</td></tr>
+    <tr><td>Report persistence to Supabase (currently ephemeral)</td><td>❌ Schema ready, not wired</td><td style="color:var(--amber)">Medium</td></tr>
+  </tbody>
+</table>
+</div>
+
+<hr class="divider">
+
+<div style="text-align:center; padding:2rem 0; color:var(--fg-muted); font-size:0.8rem; font-family:var(--font-mono);">
+  NoCap Verify PRD v1.0 — October 14, 2026<br>
+  Archit Kumar · architk171@gmail.com<br>
+  nocapverify.in
+</div>
