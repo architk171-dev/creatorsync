@@ -226,12 +226,15 @@ export default function ReportPreview({ report }: { report: ReportData }) {
 
       {/* Verdict Panel */}
       <div className="bg-gradient-to-br from-accent/10 to-card rounded-2xl border border-accent/20 p-6 mb-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-1">
           <h3 className="text-sm font-bold uppercase tracking-wider text-accent">
-            Verdict
+            Content Verdict
           </h3>
           <ScoreBadge score={report.verdict.overallScore} />
         </div>
+        <p className="text-[10px] text-muted mb-3">
+          Engagement, growth &amp; posting consistency — not a fake-follower check
+        </p>
 
         <p
           className={`text-sm mb-4 leading-relaxed `}
@@ -392,7 +395,7 @@ export default function ReportPreview({ report }: { report: ReportData }) {
             <div className="bg-card rounded-2xl border border-border p-6 mb-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-muted">
-                  YouTube Valuation
+                  Trust Score &amp; Pricing
                 </h3>
                 <TrustBadge verdict={ytAudit.verdict} score={ytAudit.trustScore} />
               </div>
@@ -532,7 +535,7 @@ export default function ReportPreview({ report }: { report: ReportData }) {
             <div className="bg-card rounded-2xl border border-border p-6 mb-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-muted">
-                  Instagram Valuation
+                  Trust Score &amp; Pricing
                 </h3>
                 <TrustBadge verdict={igAudit.verdict} score={igAudit.trustScore} />
               </div>

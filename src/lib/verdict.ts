@@ -16,6 +16,18 @@ const CATEGORY_BENCHMARKS: Record<string, number> = {
   lifestyle: 3.5,
 };
 
+// Engagement rate mechanically shrinks as subscriber count grows — a 21M-sub
+// channel at 1.5% is healthy where a 10K-sub channel at 1.5% would be weak.
+// Category benchmarks are calibrated around mid-tier creators, so larger/smaller
+// tiers get scaled down/up before comparison.
+function tierMultiplier(subscriberCount: number): number {
+  if (subscriberCount >= 10_000_000) return 0.35; // mega
+  if (subscriberCount >= 1_000_000) return 0.6; // macro
+  if (subscriberCount >= 100_000) return 1.0; // mid
+  if (subscriberCount >= 10_000) return 1.2; // micro
+  return 1.5; // nano
+}
+
 export function generateVerdict(
   avgEngagement: number,
   recentVideos: YouTubeVideo[],
@@ -24,8 +36,8 @@ export function generateVerdict(
   category = "default"
 ): VerdictData {
   const benchmark =
-    CATEGORY_BENCHMARKS[category.toLowerCase()] ||
-    CATEGORY_BENCHMARKS.default;
+    (CATEGORY_BENCHMARKS[category.toLowerCase()] ||
+      CATEGORY_BENCHMARKS.default) * tierMultiplier(subscriberCount);
 
   let engagementVerdict: "above" | "below" | "average";
   let engagementBenchmark: string;
