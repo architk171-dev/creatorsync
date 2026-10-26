@@ -75,6 +75,21 @@ export async function getLinkedInProfiles(
   }
 }
 
+function parseLocation(raw: unknown): string | null {
+  if (!raw) return null;
+  if (typeof raw === "string") return raw;
+  if (typeof raw === "object") {
+    const loc = raw as Record<string, unknown>;
+    const text = loc.linkedinText || loc.parsedText || loc.full || loc.city;
+    if (typeof text === "string" && text.trim()) return text;
+    const parts = [loc.city, loc.state, loc.country]
+      .filter((p): p is string => typeof p === "string" && p.trim().length > 0);
+    if (parts.length > 0) return parts.join(", ");
+    return null;
+  }
+  return null;
+}
+
 function parseLinkedInProfile(raw: Record<string, unknown>): LinkedInProfile {
   const firstName = String(raw.firstName || "");
   const lastName = String(raw.lastName || "");
@@ -100,7 +115,7 @@ function parseLinkedInProfile(raw: Record<string, unknown>): LinkedInProfile {
     fullName: `${firstName} ${lastName}`.trim(),
     headline: String(raw.headline || ""),
     about: raw.about ? String(raw.about) : null,
-    location: raw.location ? String(raw.location) : null,
+    location: parseLocation(raw.location),
     industry: raw.industry ? String(raw.industry) : null,
     followerCount: Number(raw.followerCount) || 0,
     connectionsCount: Number(raw.connectionsCount) || 0,
