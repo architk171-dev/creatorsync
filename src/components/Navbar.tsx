@@ -65,6 +65,13 @@ export default function Navbar() {
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover/link:w-full" />
           </a>
           <a
+            href="/pricing"
+            className="hover:text-foreground transition relative group/link"
+          >
+            Pricing
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover/link:w-full" />
+          </a>
+          <a
             href="/campaign"
             className="bg-accent hover:bg-accent-light text-white px-4 py-2 rounded-full text-sm font-medium transition hover:scale-105 hover:shadow-lg hover:shadow-accent/20"
           >
@@ -104,6 +111,9 @@ export default function Navbar() {
           </a>
           <a href="/how-we-verify" className="text-sm text-muted hover:text-foreground" onClick={() => setOpen(false)}>
             How We Verify
+          </a>
+          <a href="/pricing" className="text-sm text-muted hover:text-foreground" onClick={() => setOpen(false)}>
+            Pricing
           </a>
           <a href="/campaign" className="bg-accent text-white px-4 py-2 rounded-full text-sm font-medium text-center" onClick={() => setOpen(false)}>
             Plan Campaign

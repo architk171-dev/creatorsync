@@ -2,8 +2,12 @@ import { NextResponse } from "next/server";
 import { generateDeliverableBrief } from "@/lib/gemini";
 import { CampaignBrief } from "@/lib/types";
 import { trackEvent, logError } from "@/lib/events";
+import { requirePro } from "@/lib/require-pro";
 
 export async function POST(req: Request) {
+  const gate = await requirePro();
+  if (gate) return gate;
+
   let reqBody: any = {};
   try {
     const { brief, creator } = reqBody = (await req.json()) as {

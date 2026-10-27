@@ -10,6 +10,7 @@ import {
 import { randomUUID } from "crypto";
 import { trackEvent, logError } from "@/lib/events";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { requirePro } from "@/lib/require-pro";
 
 export const maxDuration = 60;
 
@@ -159,6 +160,9 @@ function generatePlatformNotes(
 }
 
 export async function POST(req: Request) {
+  const gate = await requirePro();
+  if (gate) return gate;
+
   const startTime = Date.now();
   let brief = {} as CampaignBrief;
   try {

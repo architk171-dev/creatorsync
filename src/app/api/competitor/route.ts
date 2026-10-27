@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { requirePro } from "@/lib/require-pro";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 const MODELS = ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-flash-latest"];
@@ -22,6 +23,9 @@ async function generateWithRetry(prompt: string): Promise<string> {
 }
 
 export async function POST(req: Request) {
+  const gate = await requirePro();
+  if (gate) return gate;
+
   try {
     const { brands, category } = await req.json();
 

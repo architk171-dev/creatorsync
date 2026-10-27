@@ -44,6 +44,7 @@ import {
   Activity,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import ProGate from "@/components/ProGate";
 import { CampaignBrief, CampaignAnalysis, CampaignGoal, CreatorRecommendation, PlatformNote } from "@/lib/types";
 import { estimateCreatorPricing, formatPrice } from "@/lib/pricing";
 import { auditCreator, AuditResult } from "@/lib/audit";
@@ -347,6 +348,10 @@ export default function CampaignPage() {
         </div>
       </div>
     );
+  }
+
+  if (session?.user?.plan !== "pro") {
+    return <ProGate feature="Campaign Planner" />;
   }
 
   return (

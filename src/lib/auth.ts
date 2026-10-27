@@ -63,11 +63,12 @@ export const authOptions: NextAuthOptions = {
       if (session.user?.email) {
         const { data } = await getSupabaseAdmin()
           .from("users")
-          .select("id")
+          .select("id, plan")
           .eq("email", session.user.email)
           .single();
         if (data) {
           (session.user as any).id = data.id;
+          (session.user as any).plan = data.plan === "pro" ? "pro" : "free";
         }
       }
       return session;

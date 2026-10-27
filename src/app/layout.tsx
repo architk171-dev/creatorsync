@@ -24,6 +24,11 @@ export const metadata: Metadata = {
   title: "NoCap Verify — Stop the Cap. Start the Campaign.",
   description:
     "API-verified creator due diligence reports for brands, agencies & investors. Real metrics, not screenshots. No cap.",
+  verification: {
+    // Paste the content value from Search Console's HTML tag verification
+    // (search.google.com/search-console → Add property → nocapverify.in → HTML tag).
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

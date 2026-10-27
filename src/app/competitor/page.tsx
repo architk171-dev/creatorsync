@@ -16,6 +16,8 @@ import {
   Target,
 } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import ProGate from "@/components/ProGate";
 
 interface CompetitorResult {
   brandName: string;
@@ -41,6 +43,7 @@ function formatNumber(n: number): string {
 }
 
 export default function CompetitorPage() {
+  const { data: session, status } = useSession();
   const [brandNames, setBrandNames] = useState("");
   const [category, setCategory] = useState("");
   const [loading, setLoading] = useState(false);
@@ -76,6 +79,49 @@ export default function CompetitorPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="text-center max-w-sm">
+          <Shield className="w-12 h-12 text-accent mx-auto mb-4" />
+          <h1 className="text-xl font-bold mb-2">Sign in to track competitors</h1>
+          <p className="text-sm text-muted mb-6">
+            Competitor intelligence is available for signed-in users.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Link
+              href="/auth/signin?callbackUrl=/competitor"
+              className="bg-accent hover:bg-accent-light text-white px-6 py-3 rounded-xl font-medium text-sm transition text-center"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/auth/signup?callbackUrl=/competitor"
+              className="border border-border hover:border-accent/40 text-muted hover:text-foreground px-6 py-3 rounded-xl text-sm transition text-center"
+            >
+              Create Account
+            </Link>
+          </div>
+          <Link href="/" className="inline-block text-xs text-muted hover:text-foreground mt-6 transition">
+            ← Back to home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (session?.user?.plan !== "pro") {
+    return <ProGate feature="Competitor Intel" />;
   }
 
   return (
