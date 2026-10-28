@@ -20,3 +20,4 @@ create table if not exists webhook_log (
 
 alter table webhook_log enable row level security;
 create policy "Service role full access" on webhook_log for all using (true);
+
