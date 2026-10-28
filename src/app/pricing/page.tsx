@@ -1,8 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
 import { Check, Loader2, Shield } from "lucide-react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
@@ -23,17 +22,7 @@ const PRO_FEATURES = [
 ];
 
 export default function PricingPage() {
-  return (
-    <Suspense fallback={null}>
-      <PricingContent />
-    </Suspense>
-  );
-}
-
-function PricingContent() {
   const { data: session, status } = useSession();
-  const searchParams = useSearchParams();
-  const upgraded = searchParams.get("upgraded");
   const [loading, setLoading] = useState(false);
 
   const isPro = session?.user?.plan === "pro";
@@ -66,11 +55,6 @@ function PricingContent() {
           <p className="text-muted text-sm">
             Start free. Upgrade when you need campaign planning and competitor intel.
           </p>
-          {upgraded && (
-            <p className="mt-4 inline-flex items-center gap-2 text-xs bg-accent/10 text-accent px-3 py-1.5 rounded-full">
-              <Check className="w-3.5 h-3.5" /> Checkout complete — your plan updates once payment is confirmed.
-            </p>
-          )}
         </div>
 
         <div className="max-w-3xl mx-auto grid sm:grid-cols-2 gap-6">

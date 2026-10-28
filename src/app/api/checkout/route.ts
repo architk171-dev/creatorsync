@@ -32,7 +32,7 @@ export async function POST() {
     customer: user?.dodo_customer_id
       ? { customer_id: user.dodo_customer_id }
       : { email: session.user.email, name: user?.name || session.user.name || "" },
-    return_url: `${appUrl}/pricing?upgraded=1`,
+    return_url: `${appUrl}/upgrade/success`,
   });
 
   return NextResponse.json({ checkoutUrl: checkoutSession.checkout_url });
