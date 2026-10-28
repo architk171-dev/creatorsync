@@ -14,10 +14,15 @@ async function claim(webhookId: string, eventType: string): Promise<boolean> {
 export const POST = Webhooks({
   webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_KEY || "",
   onPayload: async (payload) => {
-    const webhookId =
+    // Prefixed with the event type: payment.succeeded and subscription.active
+    // for the same checkout share the same payment_id, so a bare resource id
+    // would make the second event look like a duplicate of the first and get
+    // silently skipped.
+    const resourceId =
       (payload.data as { payment_id?: string; subscription_id?: string }).payment_id ||
       (payload.data as { subscription_id?: string }).subscription_id ||
-      `${payload.type}-${payload.timestamp}`;
+      payload.timestamp;
+    const webhookId = `${payload.type}:${resourceId}`;
 
     const isNew = await claim(webhookId, payload.type);
     if (!isNew) return;
