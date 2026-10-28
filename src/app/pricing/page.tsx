@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Check, Loader2, Shield } from "lucide-react";
@@ -23,6 +23,14 @@ const PRO_FEATURES = [
 ];
 
 export default function PricingPage() {
+  return (
+    <Suspense fallback={null}>
+      <PricingContent />
+    </Suspense>
+  );
+}
+
+function PricingContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const upgraded = searchParams.get("upgraded");
